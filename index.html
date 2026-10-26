@@ -403,11 +403,14 @@ body{background:var(--color-bg);color:var(--color-fg);font-family:var(--font-ant
     // as-of strip
     const a = dash.data('asof'), ab = $('#asof');
     if (a.status === 'ok') {
-      ab.replaceChildren(...a.data.map((r, i) => {
-        const s = document.createElement('span');
-        s.textContent = r.sheet + ': ' + DAY(pDate(r.as_of)) + (r.note ? ' (' + r.note.toLowerCase() + ')' : '');
-        return s;
-      }));
+      const last = a.data.reduce((m, r) => (r.as_of > m.as_of ? r : m), a.data[0]);
+      const s = document.createElement('span');
+      s.append('Data up to ');
+      const d = document.createElement('b');
+      d.dataset.source = 'asof'; d.dataset.field = 'as_of'; d.dataset.where = 'sheet=' + encodeURIComponent(last.sheet);
+      d.textContent = d3.utcFormat('%-d %b %Y')(pDate(last.as_of));
+      s.append(d);
+      ab.replaceChildren(s);
     }
     // takeaway
     const tt = $('#take-text');
