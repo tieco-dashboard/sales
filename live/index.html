@@ -121,6 +121,19 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
   </section>
 
   <section class="lv-page" id="mkt" data-page="mkt" hidden>
+    <div class="lv-card" id="next"><h2>What to run next</h2>
+      <p class="lv-note">How to decide, in this order. 1) Move money: cut or pause campaigns below the ROAS floor and add to campaigns well above it (first table). 2) Spend the freed budget on the products below, top priority first: proven sellers with stock for all of BFS, then deep stock that is live but slow, then the catalogue / retargeting push. 3) Take sold-out and nearly sold-out styles out of ads. Suggested amounts use today's spend as the daily budget; check the live budget in Ads Manager before changing it.</p>
+      <div class="lv-tiles">
+        <div class="lv-tile"><span class="k">Budget to free up (₹ / day)</span><span class="v" data-draw="nx-rel" data-source="moves_tot" data-field="released" data-row="0">—</span><span class="s">from <span data-draw="nx-reln" data-source="moves_tot" data-field="cut_count" data-row="0">—</span> campaigns below the floor</span></div>
+        <div class="lv-tile"><span class="k">Add to winners (₹ / day)</span><span class="v" data-draw="nx-add" data-source="moves_tot" data-field="added" data-row="0">—</span><span class="s"><span data-draw="nx-addn" data-source="moves_tot" data-field="scale_count" data-row="0">—</span> campaigns at 1.5× the floor or better</span></div>
+        <div class="lv-tile"><span class="k">For new product ad sets (₹ / day)</span><span class="v" data-draw="nx-new" data-source="moves_tot" data-field="for_new" data-row="0">—</span><span class="s">Freed budget minus what goes to winners</span></div>
+      </div>
+      <h2>1. Budget moves on live Meta campaigns</h2>
+      <div class="lv-tw" style="max-height:24rem"><table data-source="ad_moves" data-row-key="id"><thead><tr><th class="l" data-field="campaign">Campaign</th><th class="l" data-field="focus">Focus</th><th data-field="spend">Spent today ₹</th><th data-field="roas">ROAS</th><th class="l" data-field="move">Move</th><th data-field="change">Budget change ₹ / day</th></tr></thead><tbody data-draw="b-moves"></tbody></table></div>
+      <h2>2. Products to put in the next ad sets, by priority</h2>
+      <div class="lv-tw" style="max-height:32rem"><table data-source="next_ads" data-row-key="id"><thead><tr><th data-field="priority">Priority</th><th class="l" data-field="play">Play</th><th class="l" data-field="category">Category</th><th class="l" data-field="styles">Lead styles (stock)</th><th data-field="stock">Stock</th><th data-field="budget">Suggested ₹ / day</th><th class="l" data-field="what_to_run">What to run</th></tr></thead><tbody data-draw="b-nextads"></tbody></table></div>
+      <h2>3. Take out of ads</h2>
+      <div class="lv-tw" style="max-height:20rem"><table data-source="ads_out" data-row-key="style"><thead><tr><th class="l" data-field="style">Style</th><th class="l" data-field="name">Product</th><th class="l" data-field="reason">Why</th><th data-field="sold_today">Sold today</th><th data-field="atp">Stock left</th></tr></thead><tbody data-draw="b-adsout"></tbody></table></div></div>
     <div class="lv-card" id="liq"><h2>BFS liquidation plan: sell what's already in the warehouse</h2>
       <p class="lv-note">No replenishment and no store pulls during BFS, so spend and placement go to stock that is already in the online warehouse. Physical ATP only (Good inventory); virtual stock is shown separately. "Left on 6 Dec" = ATP minus today's pace carried to the end of BFS. Day 1 is usually the strongest day, so the real leftover will likely be higher. As of <span data-draw="lq-asof" data-source="liq_summary" data-field="as_of" data-row="0">—</span>.</p>
       <div class="lv-tiles">
@@ -148,9 +161,24 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
       <div class="lv-tile"><span class="k">Target ROAS</span><span class="v" data-draw="m-be" data-source="ads" data-field="target_roas" data-row="0">—</span><span class="s">BFS media plan floor for this phase</span></div>
       <div class="lv-tile"><span class="k">BFS budget used (MTD)</span><span class="v" data-draw="m-bud" data-source="ads_tot" data-field="budget_used" data-row="0">—</span><span class="s">₹<span data-draw="m-mtd" data-source="ads_tot" data-field="spend_mtd" data-row="0">—</span> L of ₹<span data-draw="m-bb" data-source="ads_tot" data-field="bfs_budget" data-row="0">—</span> L</span></div>
     </div>
-    <div class="lv-card" id="tracker"><h2>Active spend tracker</h2>
-      <p class="lv-note">Today against the day plan from the BFS media plan, and month to date against the BFS budget. ₹ lakh.</p>
-      <div class="lv-tw"><table data-source="ads" data-row-key="platform"><thead><tr><th class="l" data-field="platform">Platform</th><th data-field="campaigns_live">Live campaigns</th><th data-field="spend_today">Spend today</th><th data-field="day_plan">Day plan</th><th>Pace</th><th data-field="roas_today">ROAS today</th><th data-field="spend_mtd">Spend MTD</th><th data-field="roas_mtd">ROAS MTD</th><th data-field="bfs_budget">BFS budget</th></tr></thead><tbody data-draw="b-track"></tbody></table></div></div>
+    <div class="lv-card" id="tracker"><h2>Spends tracker</h2>
+      <p class="lv-note">Meta spend against the BFS day-wise media plan (₹70 L Meta, ₹5.7 L Google). BFS spend counts from the pre-sale start on 18 Nov. "Expected by now" spreads today's plan evenly over 24 hours; sales and spend are front-loaded on peak days, so a pace above 100% early in the day is normal. As of <span data-draw="sp-asof" data-source="spend_tot" data-field="as_of" data-row="0">—</span>.</p>
+      <div class="lv-tiles">
+        <div class="lv-tile"><span class="k">Meta spend today (₹ L)</span><span class="v" data-draw="sp-today" data-source="spend_tot" data-field="today_actual" data-row="0">—</span><span class="s">Day plan ₹<span data-draw="sp-tplan" data-source="spend_tot" data-field="today_plan" data-row="0">—</span> L · pace <span data-draw="sp-pace" data-source="spend_tot" data-field="pace" data-row="0">—</span> of expected by now</span></div>
+        <div class="lv-tile"><span class="k">Projected today at this pace (₹ L)</span><span class="v" data-draw="sp-proj" data-source="spend_tot" data-field="projected_today" data-row="0">—</span><span class="s">Expected by now ₹<span data-draw="sp-exp" data-source="spend_tot" data-field="expected_now" data-row="0">—</span> L</span></div>
+        <div class="lv-tile"><span class="k">Meta BFS spend to date (₹ L)</span><span class="v" data-draw="sp-bfs" data-source="spend_tot" data-field="bfs_actual" data-row="0">—</span><span class="s">Plan to date ₹<span data-draw="sp-bfsp" data-source="spend_tot" data-field="bfs_plan" data-row="0">—</span> L · <span data-draw="sp-bfsv" data-source="spend_tot" data-field="bfs_variance" data-row="0">—</span> L vs plan</span></div>
+        <div class="lv-tile"><span class="k">Meta budget left (₹ L)</span><span class="v" data-draw="sp-left" data-source="spend_tot" data-field="budget_left" data-row="0">—</span><span class="s">Plan for the <span data-draw="sp-days" data-source="spend_tot" data-field="days_left" data-row="0">—</span> days after today: ₹<span data-draw="sp-rplan" data-source="spend_tot" data-field="remaining_plan" data-row="0">—</span> L</span></div>
+      </div>
+      <div class="lv-tw"><table data-source="ads" data-row-key="platform"><thead><tr><th class="l" data-field="platform">Platform</th><th data-field="campaigns_live">Live campaigns</th><th data-field="spend_today">Spend today</th><th data-field="day_plan">Day plan</th><th>Pace</th><th data-field="roas_today">ROAS today</th><th data-field="spend_mtd">Spend MTD</th><th data-field="roas_mtd">ROAS MTD</th><th data-field="bfs_budget">BFS budget</th></tr></thead><tbody data-draw="b-track"></tbody></table></div>
+      <div class="lv-grid">
+        <div id="spend-daily"><h2>Meta spend by day: plan vs actual (₹ lakh)</h2><div class="lv-chart" data-draw="c-spend-daily" data-source="spend_daily"></div></div>
+        <div id="spend-intraday"><h2>Today's Meta spend through the day (₹ lakh)</h2><div class="lv-chart" data-draw="c-spend-intra" data-source="spend_intraday spend_tot"></div></div>
+      </div>
+      <h2>Day-wise plan vs actual</h2>
+      <div class="lv-tw" style="max-height:24rem"><table data-source="spend_daily" data-row-key="date"><thead><tr><th class="l" data-field="date">Date</th><th class="l" data-field="day">Sale day</th><th class="l" data-field="phase">Phase</th><th data-field="meta_plan">Meta plan ₹</th><th data-field="meta_actual">Meta actual ₹</th><th>Actual vs plan</th><th data-field="meta_value">Meta revenue ₹</th><th data-field="roas_floor">ROAS floor</th><th data-field="google_plan">Google plan ₹</th><th data-field="google_actual">Google actual ₹</th></tr></thead><tbody data-draw="b-spendday"></tbody></table></div>
+      <h2>Today's Meta spend by category vs the media plan split</h2>
+      <p class="lv-note">Campaigns are mapped to a category from their name. Broad, catalogue and retargeting campaigns count as sale-wide. "Unassigned" is spend in campaigns that could not be read one by one or have no category in the name.</p>
+      <div class="lv-tw"><table data-source="cat_pace" data-row-key="category"><thead><tr><th class="l" data-field="category">Category</th><th data-field="plan_share">Plan share</th><th data-field="plan_today">Plan today ₹</th><th data-field="spend_today">Spent today ₹</th><th data-field="gap">Over / under ₹</th><th data-field="roas">ROAS today</th></tr></thead><tbody data-draw="b-catpace"></tbody></table></div></div>
     <div class="lv-grid">
       <div class="lv-card" id="focus-chart"><h2>Spend vs sales by focus, today</h2>
         <p class="lv-note">₹ lakh. Ad spend by the category a campaign targets (from its name) against platform-reported revenue.</p>
@@ -164,6 +192,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
       <div class="lv-tw" style="max-height:40rem"><table data-source="campaigns" data-row-key="id"><thead><tr><th class="l" data-field="platform">Platform</th><th class="l" data-field="campaign">Campaign</th><th class="l" data-field="focus">Focus</th><th data-field="spend">Spend ₹</th><th data-field="purchases">Purchases</th><th data-field="revenue">Revenue ₹</th><th data-field="roas">ROAS</th><th data-field="cpa">Cost / purchase ₹</th><th class="l">Do</th></tr></thead><tbody data-draw="b-camp"></tbody></table></div></div>
   </section>
 </div>
+<script src="spend.js"></script>
 <script>
 window.lvF = {L2: d3.format(',.2f'), N: d3.format(',.0f'), P: d3.format('.0%'), P1: d3.format('.1%'), X: d3.format('.1f')};
 window.lvTime = (s) => { const d = new Date(s); return isNaN(d) ? '—' : d.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}); };
