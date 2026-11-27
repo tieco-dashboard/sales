@@ -167,7 +167,7 @@ dash.calc('roas_now', {inputs: ['ads', 'spend_daily', 'sales'], title: 'ROAS tod
   const row = (k, label, x, t, mn, extra) => ({id: k, label, roas: x, target: t || null, minimum: mn || null, pct: x != null && t ? x / t : null, status: st(x, t, mn), ...extra});
   const k = spK(ads, sales); const amMin = p.roas_floor ? +p.roas_floor * k : null; const amTg = p.web_meta_target ? +p.web_meta_target * k : +p.meta_am_target;
   const out = [
-    row('meta', 'Meta ROAS in Ads Manager', ms ? +meta.revenue_today / ms : null, amTg, amMin, {mtd: +meta.roas_mtd || null, breakeven: meta.breakeven_roas == null ? null : +meta.breakeven_roas, note: (k === SP_AM ? 'plan ratio ' : 'live ratio ') + k.toFixed(2) + ' (Ads Manager ÷ Shopify)'}),
+    row('meta', 'Meta ROAS in Ads Manager', ms ? +meta.revenue_today / ms : null, amTg, amMin, {mtd: +meta.roas_mtd || null, breakeven: meta.breakeven_roas == null ? null : +meta.breakeven_roas, note: (k === SP_AM ? 'plan ratio ' : 'ratio ') + k.toFixed(2)}),
     row('webmeta', 'Website ROAS on Meta spend', W != null && ms ? W / ms : null, +p.web_meta_target, +p.roas_floor, {}),
     row('webtotal', 'Website ROAS on all ad spend', W != null && ms + gs ? W / (ms + gs) : null, +p.total_roas_target, null, {}),
     row('google', 'Google ROAS', gs ? +g.revenue_today / gs : null, null, null, {mtd: +g.roas_mtd || null, status: 'Fixed ₹50K a day, search and shopping'}),
@@ -182,6 +182,44 @@ function spRc(r) { const m = spRoasRow('meta'); return !m || !m.minimum || r.roa
   const isRev = k === 'rev';
   dash.draw('rn-' + k, (el) => { const r = spRoasRow(k); el.classList.remove('ok', 'bad', 'warn'); if (!r || r.roas == null) { el.textContent = '—'; return; } el.textContent = isRev ? '₹' + spG.L2(r.roas) + ' L' : spG.X(r.roas) + '×'; if (r.target) el.classList.add(r.roas >= r.target ? 'ok' : r.minimum == null || r.roas >= r.minimum ? 'warn' : 'bad'); });
   dash.draw('rn-' + k + '-t', (el) => { const r = spRoasRow(k); el.textContent = !r || !r.target ? (k === 'google' ? 'no target (fixed ₹50K/day)' : '—') : 'plan ' + (isRev ? '₹' + spG.L2(r.target) + ' L' : spG.X(r.target) + '×') + (r.minimum ? ' · min ' + spG.X(r.minimum) + '×' : ''); });
-  dash.draw('rn-' + k + '-s', (el) => { const r = spRoasRow(k); if (!r) { el.textContent = '—'; return; } el.textContent = [r.pct != null ? spG.P(r.pct) + ' of plan' : '', r.status, r.mtd ? 'MTD ' + spG.X(r.mtd) + '×' : '', r.note || '', r.breakeven ? 'break-even ' + spG.X(r.breakeven) + '×' : ''].filter(Boolean).join(' · '); });
+  dash.draw('rn-' + k + '-s', (el) => { const r = spRoasRow(k); if (!r) { el.textContent = '—'; return; } el.textContent = [r.pct != null ? spG.P(r.pct) + ' of plan' : '', r.status, k === 'meta' ? spWebMeta() : '', spPer(k), r.note || '', r.breakeven ? 'break-even ' + spG.X(r.breakeven) + '×' : ''].filter(Boolean).join(' · '); });
 });
 dash.draw('rn-focus', (el) => { const r = spRoasRow('focus'); el.textContent = r && r.status ? r.status : '—'; });
+
+// BFS-period totals (18 Nov to 7 Dec); from 8 Dec the same tiles fall back to month to date from the ads file
+const SP_SALE = '2026-11-27', SP_END = '2026-12-07';
+dash.calc('bfs_tot', {inputs: ['spend_daily', 'ads', 'sales'], title: 'BFS to date', description: "Ad spend from the pre-sale start (18 Nov) to now, per platform and in all, against the BFS budgets (Meta ₹70 L, Google ₹5.7 L). Platform ROAS for the sale days (from 27 Nov) = platform revenue ÷ spend over those days. BFS MER = website (Shopify) net sales on sale days ÷ all BFS ad spend, the basis of the plan's 7.9× target (₹6 Cr ÷ ₹75.7 L); MER needed = revenue still to reach the ₹6 Cr target ÷ budget left. Past days come from the day-wise table, today from the live pull. After 7 Dec the platform rows switch to month to date.", fn: (daily, ads, sales) => {
+  const meta = ads.find((r) => r.platform === 'Meta') || {}, g = ads.find((r) => r.platform === 'Google') || {};
+  const day = String(meta.as_of || g.as_of || '').slice(0, 10);
+  if (day > SP_END) return [{platform: 'Meta', period: 'mtd', spend: +meta.spend_mtd || 0, roas: +meta.roas_mtd || null}, {platform: 'Google', period: 'mtd', spend: +g.spend_mtd || 0, roas: +g.roas_mtd || null}, {platform: 'All', period: 'mtd', spend: (+meta.spend_mtd || 0) + (+g.spend_mtd || 0)}];
+  const web = +((sales.find((r) => r.channel === 'Shopify') || {}).net_lakh) || 0;
+  const past = daily.filter((r) => r.date < day), sale = past.filter((r) => r.date >= SP_SALE), isSale = day >= SP_SALE;
+  const tr = daily.find((r) => r.date === day) || {};
+  const ms = Math.max(+meta.spend_today || 0, +tr.meta_actual || 0), gs = Math.max(+g.spend_today || 0, +tr.google_actual || 0), mr = +meta.revenue_today || 0, gr = +g.revenue_today || 0;
+  const mB = d3.sum(past, (r) => +r.meta_actual || 0) + ms, gB = d3.sum(past, (r) => +r.google_actual || 0) + gs;
+  const mS = d3.sum(sale, (r) => +r.meta_actual || 0) + (isSale ? ms : 0), mV = d3.sum(sale, (r) => +r.meta_value || 0) + (isSale ? mr : 0);
+  const gS = d3.sum(sale, (r) => +r.google_actual || 0) + (isSale ? gs : 0), gV = d3.sum(sale, (r) => +r.google_value || 0) + (isSale ? gr : 0);
+  const mOk = sale.every((r) => r.meta_value != null), gOk = sale.every((r) => r.google_value != null), wOk = sale.every((r) => r.web_actual != null);
+  const webSale = d3.sum(sale, (r) => +r.web_actual || 0) + (isSale ? web : 0);
+  const planSale = d3.sum(daily.filter((r) => r.date >= SP_SALE && r.date <= day), (r) => +r.revenue_target || 0);
+  const spent = mB + gB, left = 7570000 - spent;
+  return [
+    {platform: 'Meta', period: 'bfs', spend: mB, budget: 7000000, roas: mOk && mS ? mV / mS : null},
+    {platform: 'Google', period: 'bfs', spend: gB, budget: 570000, roas: gOk && gS ? gV / gS : null},
+    {platform: 'All', period: 'bfs', spend: spent, budget: 7570000, web_sale: wOk ? webSale : null, plan_sale: planSale, mer: wOk && spent ? webSale * 1e5 / spent : null, mer_target: 7.93, mer_needed: wOk && left > 0 ? (600 - webSale) * 1e5 / left : null},
+  ];
+}});
+window.spBfs = (platform, f) => { const d = dash.data('bfs_tot'); const r = d.status === 'ok' && Array.isArray(d.data) ? d.data.find((x) => x.platform === platform) : null; return r ? r[f] : null; };
+function spPer(k) { const p = k === 'meta' ? 'Meta' : k === 'google' ? 'Google' : null; if (!p) return ''; const x = window.spBfs(p, 'roas'); return x ? (window.spBfs(p, 'period') === 'mtd' ? 'MTD ' : 'BFS sale ') + spG.X(x) + '×' : ''; }
+function spWebMeta() { const r = spRoasRow('webmeta'); return r && r.roas != null ? 'website ' + spG.X(r.roas) + '×' + (r.minimum ? ' (min ' + spG.X(r.minimum) + '×)' : '') : ''; }
+const spB = (f, fmt) => (el) => { const v = window.spBfs('All', f); el.textContent = v == null ? '—' : fmt(v); };
+dash.draw('gl-mer', (el) => { const v = window.spBfs('All', 'mer'); el.classList.remove('ok', 'warn', 'bad'); if (v == null) { el.textContent = '—'; return; } el.textContent = spG.X(v) + '×'; const n = window.spBfs('All', 'mer_needed'); el.classList.add(n == null || n <= 7.93 ? 'ok' : n <= 12 ? 'warn' : 'bad'); });
+dash.draw('gl-mer-t', spB('mer_target', (v) => spG.X(v) + '×'));
+dash.draw('gl-mer-s', (el) => { const w = window.spBfs('All', 'web_sale'), p = window.spBfs('All', 'plan_sale'), n = window.spBfs('All', 'mer_needed'); el.textContent = w == null ? 'Website sales for past sale days not filled yet' : 'Website ₹' + spG.L2(w) + ' L of ₹' + spG.L2(p || 0) + ' L plan to date' + (n ? ' · needs ' + spG.X(n) + '× on the rest of the budget to reach ₹6 Cr' : ''); });
+dash.draw('gl-spend', (el) => { const v = window.spBfs('All', 'spend'); el.textContent = v == null ? '—' : '₹' + spG.L2(v / 1e5) + ' L'; });
+dash.draw('gl-spend-k', (el) => { el.textContent = window.spBfs('All', 'period') === 'mtd' ? 'Ad spend, month to date' : 'Ad spend, BFS to date (from 18 Nov)'; });
+dash.draw('gl-spend-s', (el) => { const t = dash.data('spend_tot'); const r = t.status === 'ok' && t.data ? t.data[0] : null; const m = window.spBfs('Meta', 'spend'), g = window.spBfs('Google', 'spend'); if (m == null) { el.textContent = '—'; return; } el.textContent = 'Meta ₹' + spG.L2(m / 1e5) + ' L of ₹70 L · Google ₹' + spG.L2((g || 0) / 1e5) + ' L of ₹5.7 L' + (r && r.today_plan ? ' · Meta today ₹' + spG.L2(r.today_actual) + ' L of ₹' + spG.L2(r.today_plan) + ' L plan (' + spG.P(r.pace) + ' of pace)' : ''); });
+dash.draw('gl-mv', (el) => { const d = dash.data('moves_tot'); const r = d.status === 'ok' && d.data ? d.data[0] : null; el.textContent = r ? '₹' + spG.L2(r.released / 1e5) + ' L / day' : '—'; });
+dash.draw('gl-mv-s', (el) => { const d = dash.data('moves_tot'); const r = d.status === 'ok' && d.data ? d.data[0] : null; el.textContent = r ? r.cut_count + ' campaigns to cut or pause · ' + r.scale_count + ' to scale (+₹' + spG.L2(r.added / 1e5) + ' L) · ₹' + spG.L2(r.for_new / 1e5) + ' L for new product ad sets' : '—'; });
+dash.draw('h-sp', (el) => { el.textContent = window.spBfs('All', 'period') === 'mtd' ? 'Spend MTD (₹ L)' : 'Spend, BFS to date (₹ L)'; });
+dash.draw('h-ro', (el) => { el.textContent = window.spBfs('All', 'period') === 'mtd' ? 'ROAS MTD' : 'ROAS, BFS sale days'; });

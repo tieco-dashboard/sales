@@ -44,6 +44,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
     runAll();
   }).catch(function(e){ var a = document.getElementById('gh-asof'); if (a) a.textContent = 'could not load data'; console.error(e); });
   document.addEventListener('click', function(e){ if (e.target.closest('.lv-tab')) setTimeout(runAll, 0); });
+  document.addEventListener('toggle', function(e){ if (e.target.classList && e.target.classList.contains('lv-sec') && e.target.open) setTimeout(runAll, 0); }, true);
   var t; addEventListener('resize', function(){ clearTimeout(t); t = setTimeout(runAll, 150); });
 })();
 </script>
@@ -86,6 +87,16 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
 .lv-in{font:inherit;font-size:var(--cds-font-size-caption);padding:var(--cds-pad-xs) var(--cds-pad-sm);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);background:var(--color-panel);color:var(--color-fg)}
 .lv-tools input.lv-in{flex:1 1 16rem;min-width:0}
 .lv-cnt{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.lv-sec{border:1px solid var(--color-border-line);border-radius:var(--cds-radius);background:var(--color-panel)}
+.lv-sec>summary{cursor:pointer;list-style:none;padding:var(--cds-pad-md) var(--cds-pad-lg);display:flex;flex-direction:column;gap:2px}
+.lv-sec>summary::-webkit-details-marker{display:none}
+.lv-sec>summary .t{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium)}
+.lv-sec>summary .t::before{content:"\25B8  "}
+.lv-sec[open]>summary .t::before{content:"\25BE  "}
+.lv-sec>summary .d{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.lv-sec[open]{display:flex;flex-direction:column;gap:var(--cds-gap-md);padding-bottom:var(--cds-pad-md)}
+.lv-sec .lv-card{border:0;border-top:1px solid var(--color-border-line);border-radius:0}
+.lv-sec>.lv-grid{padding:0 var(--cds-pad-md)}
 .lv-pill{display:inline-block;padding:0 .45rem;border-radius:999px;border:1px solid currentColor;line-height:1.5}
 </style>
 <div class="lv">
@@ -125,16 +136,18 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
   </section>
 
   <section class="lv-page" id="mkt" data-page="mkt" hidden>
-    <div class="lv-card" id="roas-check"><h2>ROAS now vs the BFS plan</h2>
-      <p class="lv-note">Targets are from the BFS 2026 Meta Ads Plan for today. The plan's minimum (7× peak, 6× sustain, 5× closing) is on website revenue: Shopify net sales excl. GST ÷ Meta spend. Ads Manager targets and minimums are converted with today's live ratio of Meta revenue in Ads Manager to Shopify net sales (shown on the Meta tile; about 0.88 on day 1). The plan assumed 0.59 (× 1.172 GST × 50% Meta share), which set the Ads Manager bar too low. Green = on plan, amber = below plan but above the minimum, red = below the minimum. Plan rules: below the minimum for 2 hours after 2 pm → cut Meta budget 20%; 15%+ above plan → release the ₹2.1 L reserve to the best ad sets.</p>
+    <div class="lv-card" id="glance"><h2>Marketing at a glance</h2>
+      <p class="lv-note">Today against the BFS 2026 plan, and the whole sale so far. Green = on plan, amber = below plan but above the minimum, red = below the minimum. Meta targets are shown in Ads Manager terms, converted with today's live ratio of Meta revenue in Ads Manager to Shopify net sales. MER = website (Shopify) net sales ÷ all ad spend (Meta + Google); the plan needs 7.9× over the whole sale (₹6 Cr ÷ ₹75.7 L).</p>
       <div class="lv-tiles">
-        <div class="lv-tile"><span class="k">Meta ROAS in Ads Manager · <span data-draw="rn-meta-t" data-source="roas_now">—</span></span><span class="v" data-draw="rn-meta" data-source="roas_now">—</span><span class="s" data-draw="rn-meta-s" data-source="roas_now">—</span></div>
-        <div class="lv-tile"><span class="k">Website ROAS on Meta spend · <span data-draw="rn-webmeta-t" data-source="roas_now">—</span></span><span class="v" data-draw="rn-webmeta" data-source="roas_now">—</span><span class="s" data-draw="rn-webmeta-s" data-source="roas_now">—</span></div>
-        <div class="lv-tile"><span class="k">Website ROAS on all ad spend · <span data-draw="rn-webtotal-t" data-source="roas_now">—</span></span><span class="v" data-draw="rn-webtotal" data-source="roas_now">—</span><span class="s" data-draw="rn-webtotal-s" data-source="roas_now">—</span></div>
         <div class="lv-tile"><span class="k">Website revenue today · <span data-draw="rn-rev-t" data-source="roas_now">—</span></span><span class="v" data-draw="rn-rev" data-source="roas_now">—</span><span class="s" data-draw="rn-rev-s" data-source="roas_now">—</span></div>
-        <div class="lv-tile"><span class="k">Google ROAS · <span data-draw="rn-google-t" data-source="roas_now">—</span></span><span class="v" data-draw="rn-google" data-source="roas_now">—</span><span class="s" data-draw="rn-google-s" data-source="roas_now">—</span></div>
+        <div class="lv-tile"><span class="k">MER today · <span data-draw="rn-webtotal-t" data-source="roas_now">—</span></span><span class="v" data-draw="rn-webtotal" data-source="roas_now">—</span><span class="s" data-draw="rn-webtotal-s" data-source="roas_now">—</span></div>
+        <div class="lv-tile"><span class="k">BFS MER to date · target <span data-draw="gl-mer-t" data-source="bfs_tot">—</span></span><span class="v" data-draw="gl-mer" data-source="bfs_tot">—</span><span class="s" data-draw="gl-mer-s" data-source="bfs_tot">—</span></div>
+        <div class="lv-tile"><span class="k">Meta ROAS in Ads Manager · <span data-draw="rn-meta-t" data-source="roas_now">—</span></span><span class="v" data-draw="rn-meta" data-source="roas_now">—</span><span class="s" data-draw="rn-meta-s" data-source="roas_now">—</span></div>
+        <div class="lv-tile"><span class="k" data-draw="gl-spend-k" data-source="bfs_tot">—</span><span class="v" data-draw="gl-spend" data-source="bfs_tot">—</span><span class="s" data-draw="gl-spend-s" data-source="bfs_tot spend_tot">—</span></div>
+        <div class="lv-tile"><span class="k">Budget to move today</span><span class="v" data-draw="gl-mv" data-source="moves_tot">—</span><span class="s" data-draw="gl-mv-s" data-source="moves_tot">—</span></div>
       </div>
-      <p class="lv-note"><b>Plan focus today:</b> <span data-draw="rn-focus" data-source="roas_now">—</span></p></div>
+      <p class="lv-note"><b>Plan focus today:</b> <span data-draw="rn-focus" data-source="roas_now">—</span> Plan rules: below the minimum for 2 hours after 2 pm → cut Meta budget 20%; 15%+ above plan → release the ₹2.1 L reserve to the best ad sets.</p></div>
+    <details class="lv-sec"><summary><span class="t">What to run next</span><span class="d">Budget moves on live Meta campaigns, products for the next ad sets, styles to take out of ads</span></summary>
     <div class="lv-card" id="next"><h2>What to run next</h2>
       <p class="lv-note">How to decide, in this order. 1) Move money (BFS plan rules, Ads Manager ROAS): cut 20% on campaigns below the plan minimum, pause those far below, and add to campaigns 15%+ above the plan target (first table). 2) Spend the freed budget on the products below, top priority first: proven sellers with stock for all of BFS, then deep stock that is live but slow, then the catalogue / retargeting push. 3) Take sold-out and nearly sold-out styles out of ads. Plan rule on stock: BFS leftover and aged styles need ROAS of 7.5–8 on website revenue, new season and bestsellers can run from 4; never advertise liquidation stock on its own, only in bundles and retargeting. Suggested amounts use today's spend as the daily budget; check the live budget in Ads Manager before changing it.</p>
       <div class="lv-tiles">
@@ -151,6 +164,8 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
       <h2>3. Take out of ads</h2>
       <div class="lv-tools"><input type="search" class="lv-in" data-p="q_out" placeholder="Filter by style code or product (comma for several)" aria-label="Filter the styles to take out"><select class="lv-in" data-p="s_out" aria-label="Sort the styles to take out"><option value="">Default order</option><option value="sold_today:desc">Sold today: high to low</option><option value="atp:desc">Stock left: high to low</option><option value="atp:asc">Stock left: low to high</option></select><span class="lv-cnt" data-draw="cnt-out" data-source="ads_out"></span></div>
       <div class="lv-tw" style="max-height:20rem"><table data-source="ads_out" data-row-key="style"><thead><tr><th class="l" data-field="style">Style</th><th class="l" data-field="name">Product</th><th class="l" data-field="reason">Why</th><th data-field="sold_today">Sold today</th><th data-field="atp">Stock left</th></tr></thead><tbody data-draw="b-adsout"></tbody></table></div></div>
+    </details>
+    <details class="lv-sec"><summary><span class="t">Stock to sell</span><span class="d">BFS liquidation plan, style list and the bundle parity check</span></summary>
     <div class="lv-card" id="liq"><h2>BFS liquidation plan: sell what's already in the warehouse</h2>
       <p class="lv-note">No replenishment and no store pulls during BFS, so spend and placement go to stock that is already in the online warehouse. Physical ATP only (Good inventory); virtual stock is shown separately. "Left on 6 Dec" = ATP minus today's pace carried to the end of BFS. Day 1 is usually the strongest day, so the real leftover will likely be higher. As of <span data-draw="lq-asof" data-source="liq_summary" data-field="as_of" data-row="0">—</span>.</p>
       <div class="lv-tiles">
@@ -173,13 +188,8 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
       <p class="lv-note">Suit and co-ord sets are made as separate pieces and listed on Shopify as bundles. Shopify shows each size as the smallest stock among its pieces, so a dupatta shared by several sets is counted once per listing and once per size. "Can fulfil" is what the warehouse can actually ship. Gap above 0 = Shopify shows more sets than can be shipped.</p>
       <div class="lv-tools"><input type="search" class="lv-in" data-p="q_parity" placeholder="Filter by set code or dupatta (comma for several)" aria-label="Filter the bundle check"><select class="lv-in" data-p="s_parity" aria-label="Sort the bundle check"><option value="">Default order</option><option value="gap:desc">Gap: high to low</option><option value="shopify_shows:desc">Shopify shows: high to low</option><option value="can_fulfil:asc">Can fulfil: low to high</option></select><span class="lv-cnt" data-draw="cnt-parity" data-source="bundle_check"></span></div>
       <div class="lv-tw"><table data-source="bundle_check" data-row-key="id"><thead><tr><th class="l" data-field="listings">Listings</th><th class="l" data-field="issue">Issue</th><th data-field="shopify_shows">Shopify shows</th><th data-field="can_fulfil">Can fulfil</th><th data-field="gap">Gap</th><th class="l" data-field="fix">What to do</th></tr></thead><tbody data-draw="b-parity"></tbody></table></div></div>
-    <div class="lv-tiles">
-      <div class="lv-tile"><span class="k">Ad spend today (₹ lakh)</span><span class="v" data-draw="m-spend" data-source="ads_tot" data-field="spend_today" data-row="0">—</span><span class="s">Meta + Google</span></div>
-      <div class="lv-tile"><span class="k">Platform-reported revenue (₹ lakh)</span><span class="v" data-draw="m-rev" data-source="ads_tot" data-field="revenue_today" data-row="0">—</span><span class="s">ROAS <span data-draw="m-roas" data-source="ads_tot" data-field="roas_today" data-row="0">—</span>×, incl. GST, before returns</span></div>
-      <div class="lv-tile"><span class="k">Website MER</span><span class="v" data-draw="m-mer" data-source="ads_tot" data-field="mer" data-row="0">—</span><span class="s">Website net sales ÷ total ad spend</span></div>
-      <div class="lv-tile"><span class="k">Target ROAS</span><span class="v" data-draw="m-be" data-source="ads" data-field="target_roas" data-row="0">—</span><span class="s">BFS media plan floor for this phase</span></div>
-      <div class="lv-tile"><span class="k">BFS budget used (MTD)</span><span class="v" data-draw="m-bud" data-source="ads_tot" data-field="budget_used" data-row="0">—</span><span class="s">₹<span data-draw="m-mtd" data-source="ads_tot" data-field="spend_mtd" data-row="0">—</span> L of ₹<span data-draw="m-bb" data-source="ads_tot" data-field="bfs_budget" data-row="0">—</span> L</span></div>
-    </div>
+    </details>
+    <details class="lv-sec"><summary><span class="t">Spends tracker</span><span class="d">BFS spend vs the day-wise plan, by platform, by day and by category</span></summary>
     <div class="lv-card" id="tracker"><h2>Spends tracker</h2>
       <p class="lv-note">Meta spend against the BFS day-wise media plan (₹70 L Meta, ₹5.7 L Google). BFS spend counts from the pre-sale start on 18 Nov. "Expected by now" spreads today's plan evenly over 24 hours; sales and spend are front-loaded on peak days, so a pace above 100% early in the day is normal. As of <span data-draw="sp-asof" data-source="spend_tot" data-field="as_of" data-row="0">—</span>.</p>
       <div class="lv-tiles">
@@ -188,7 +198,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
         <div class="lv-tile"><span class="k">Meta BFS spend to date (₹ L)</span><span class="v" data-draw="sp-bfs" data-source="spend_tot" data-field="bfs_actual" data-row="0">—</span><span class="s">Plan to date ₹<span data-draw="sp-bfsp" data-source="spend_tot" data-field="bfs_plan" data-row="0">—</span> L · <span data-draw="sp-bfsv" data-source="spend_tot" data-field="bfs_variance" data-row="0">—</span> L vs plan</span></div>
         <div class="lv-tile"><span class="k">Meta budget left (₹ L)</span><span class="v" data-draw="sp-left" data-source="spend_tot" data-field="budget_left" data-row="0">—</span><span class="s">Plan for the <span data-draw="sp-days" data-source="spend_tot" data-field="days_left" data-row="0">—</span> days after today: ₹<span data-draw="sp-rplan" data-source="spend_tot" data-field="remaining_plan" data-row="0">—</span> L</span></div>
       </div>
-      <div class="lv-tw"><table data-source="ads" data-row-key="platform"><thead><tr><th class="l" data-field="platform">Platform</th><th data-field="campaigns_live">Live campaigns</th><th data-field="spend_today">Spend today</th><th data-field="day_plan">Day plan</th><th>Pace</th><th data-field="roas_today">ROAS today</th><th data-field="spend_mtd">Spend MTD</th><th data-field="roas_mtd">ROAS MTD</th><th data-field="bfs_budget">BFS budget</th></tr></thead><tbody data-draw="b-track"></tbody></table></div>
+      <div class="lv-tw"><table data-source="ads" data-row-key="platform"><thead><tr><th class="l" data-field="platform">Platform</th><th data-field="campaigns_live">Live campaigns</th><th data-field="spend_today">Spend today</th><th data-field="day_plan">Day plan</th><th>Pace</th><th data-field="roas_today">ROAS today</th><th data-draw="h-sp" data-source="bfs_tot">—</th><th data-draw="h-ro" data-source="bfs_tot">—</th><th data-field="bfs_budget">BFS budget</th></tr></thead><tbody data-draw="b-track"></tbody></table></div>
       <div class="lv-grid">
         <div id="spend-daily"><h2>Meta spend by day: plan vs actual (₹ lakh)</h2><div class="lv-chart" data-draw="c-spend-daily" data-source="spend_daily"></div></div>
         <div id="spend-intraday"><h2>Today's Meta spend through the day (₹ lakh)</h2><div class="lv-chart" data-draw="c-spend-intra" data-source="spend_intraday spend_tot"></div></div>
@@ -206,13 +216,16 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
         <p class="lv-note">Today's ad spend, online sales and online stock (ATP) per category. Days of stock = ATP ÷ today's units pace.</p>
         <div class="lv-tw"><table data-source="inv_vs_spend" data-row-key="category"><thead><tr><th class="l" data-field="category">Category</th><th data-field="spend">Spend ₹ L</th><th data-field="sales">Online sales ₹ L</th><th data-field="atp">Online ATP</th><th class="l" data-field="signal">Signal</th></tr></thead><tbody data-draw="b-inv"></tbody></table></div></div>
     </div>
+    </details>
+    <details class="lv-sec"><summary><span class="t">All live campaigns</span><span class="d">Every Meta and Google campaign with spend, revenue, ROAS and what to do</span></summary>
     <div class="lv-card" id="campaigns"><h2>Live campaigns and what to do</h2>
       <p class="lv-note">Sorted by spend. Scale: ROAS at least 1.5× the target. Hold: at or above target. Fix or cut: below target with ₹10K+ spent. Learning: Google campaigns still in learning. Platform ROAS overstates real return (it counts GST, returns and overlap between platforms).</p>
       <div class="lv-tools"><input type="search" class="lv-in" data-p="q_camp" placeholder="Filter by campaign name, platform or focus (comma for several)" aria-label="Filter the campaigns"><select class="lv-in" data-p="s_camp" aria-label="Sort the campaigns"><option value="">Default order</option><option value="spend:desc">Spend: high to low</option><option value="roas:desc">ROAS: high to low</option><option value="roas:asc">ROAS: low to high</option><option value="revenue:desc">Revenue: high to low</option><option value="purchases:desc">Purchases: high to low</option></select><span class="lv-cnt" data-draw="cnt-camp" data-source="campaigns"></span></div>
       <div class="lv-tw" style="max-height:40rem"><table data-source="campaigns" data-row-key="id"><thead><tr><th class="l" data-field="platform">Platform</th><th class="l" data-field="campaign">Campaign</th><th class="l" data-field="focus">Focus</th><th data-field="spend">Spend ₹</th><th data-field="purchases">Purchases</th><th data-field="revenue">Revenue ₹</th><th data-field="roas">ROAS</th><th data-field="cpa">Cost / purchase ₹</th><th class="l">Do</th></tr></thead><tbody data-draw="b-camp"></tbody></table></div></div>
+    </details>
   </section>
 </div>
-<script src="spend.js?v=69b4a809"></script>
+<script src="spend.js?v=6b40a76b"></script>
 <script>
 window.lvF = {L2: d3.format(',.2f'), N: d3.format(',.0f'), P: d3.format('.0%'), P1: d3.format('.1%'), X: d3.format('.1f')};
 window.lvTime = (s) => { const d = new Date(s); return isNaN(d) ? '—' : d.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}); };
@@ -293,7 +306,7 @@ dash.draw('b-sales', (tb) => lvTable(tb, 'sales', [{f: 'channel', l: 1}, {f: 'ty
 dash.draw('b-alerts', (tb) => lvTable(tb, 'alerts', [{f: 'style', l: 1}, {f: 'name', l: 1, w: 1}, {f: 'status', l: 1, pill: (r) => r.status === 'Sold out' ? 'bad' : r.status === 'Low' ? 'warn' : 'ok'}, {f: 'online_atp', fmt: G.N}, {f: 'virtual', fmt: G.N}]));
 dash.draw('b-stockcat', (tb) => lvTable(tb, 'live_category', [{f: 'category', l: 1}, {f: 'online_atp', fmt: G.N}, {f: 'store_stock', fmt: G.N}], {sort: (a, b) => b.online_atp - a.online_atp}));
 dash.draw('b-stores', (tb) => lvTable(tb, 'stores', [{f: 'store', l: 1}, {f: 'pieces', fmt: G.N}, {f: 'mrp_cr', fmt: G.L2}], {sort: (a, b) => b.pieces - a.pieces}));
-dash.draw('b-track', (tb) => lvTable(tb, 'ads', [{f: 'platform', l: 1}, {f: 'campaigns_live', fmt: G.N}, {f: 'spend_today', fmt: (v) => G.L2(v / 1e5)}, {f: 'day_plan', fmt: (v) => G.L2(v / 1e5)}, {calc: (r) => r.day_plan ? G.P(r.spend_today / r.day_plan) : '—'}, {f: 'roas_today', fmt: G.X}, {f: 'spend_mtd', fmt: (v) => G.L2(v / 1e5)}, {f: 'roas_mtd', fmt: G.X}, {f: 'bfs_budget', fmt: (v) => G.L2(v / 1e5)}]));
+dash.draw('b-track', (tb) => lvTable(tb, 'ads', [{f: 'platform', l: 1}, {f: 'campaigns_live', fmt: G.N}, {f: 'spend_today', fmt: (v) => G.L2(v / 1e5)}, {f: 'day_plan', fmt: (v) => G.L2(v / 1e5)}, {calc: (r) => r.day_plan ? G.P(r.spend_today / r.day_plan) : '—'}, {f: 'roas_today', fmt: G.X}, {calc: (r) => { const v = window.spBfs && window.spBfs(r.platform, 'spend'); return v == null ? '—' : G.L2(v / 1e5); }}, {calc: (r) => { const v = window.spBfs && window.spBfs(r.platform, 'roas'); return v == null ? '—' : G.X(v); }}, {f: 'bfs_budget', fmt: (v) => G.L2(v / 1e5)}]));
 dash.draw('b-inv', (tb) => lvTable(tb, 'inv_vs_spend', [{f: 'category', l: 1}, {f: 'spend', fmt: G.L2}, {f: 'sales', fmt: G.L2}, {f: 'atp', fmt: G.N}, {f: 'signal', l: 1, pill: (r) => /through/.test(r.signal) ? 'warn' : /shift/.test(r.signal) ? 'ok' : ''}]));
 dash.draw('b-camp', (tb) => {
   const a = dash.data('ads'); const be = a.status === 'ok' && a.data[0] ? +a.data[0].target_roas : null;
