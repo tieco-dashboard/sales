@@ -5,7 +5,7 @@ function spTable(tb, id, cols, opts) {
   const d = dash.data(id);
   tb.replaceChildren();
   if (d.status !== 'ok' || !d.data) { const tr = tb.insertRow(); const td = tr.insertCell(); td.colSpan = cols.length; td.className = 'l'; td.textContent = d.status === 'error' ? 'Could not load this table.' : '—'; return; }
-  let rows = d.data.slice(); if (opts && opts.sort) rows.sort(opts.sort);
+  let rows = d.data.slice(); if (opts && opts.sort) rows.sort(opts.sort); if (opts && opts.fk) rows = window.lvFilt(opts.fk, rows);
   rows.forEach((r) => { const tr = tb.insertRow(); if (opts && opts.key) tr.dataset.key = r[opts.key];
     cols.forEach((c) => { const td = tr.insertCell(); if (c.l) td.className = 'l'; if (c.w) td.classList.add('w');
       const v = c.f ? r[c.f] : null; const txt = c.calc ? c.calc(r) : (c.fmt ? (v == null || v === '' ? '—' : c.fmt(+v)) : (v == null ? '' : String(v)));
@@ -13,6 +13,23 @@ function spTable(tb, id, cols, opts) {
       if (c.cls) { const k = c.cls(r); if (k) td.classList.add(k); } }); });
 }
 function spTip(el) { let t = el.querySelector('.lv-tip'); if (!t) { t = document.createElement('div'); t.className = 'lv-tip'; t.hidden = true; el.appendChild(t); } return t; }
+// Table filters and sorting (Marketing tab): values live in dash.params, the tables' drawings apply them
+window.lvF2 = {liq: {id: 'liquidation', f: ['style', 'name', 'category', 'action', 'web']}, out: {id: 'ads_out', f: ['style', 'name', 'reason']}, next: {id: 'next_ads', f: ['category', 'play', 'styles']}, moves: {id: 'ad_moves', f: ['campaign', 'focus', 'move']}, parity: {id: 'bundle_check', f: ['listings', 'issue', 'fix']}, camp: {id: 'campaigns', f: ['campaign', 'platform', 'focus']}};
+window.lvFilt = (k, rows) => {
+  const c = window.lvF2[k]; if (!c || !Array.isArray(rows)) return rows;
+  const P = dash.params() || {};
+  const q = String(P['q_' + k] || '').toLowerCase().split(',').map((t) => t.trim()).filter(Boolean);
+  const r = q.length ? rows.filter((row) => { const t = c.f.map((f) => (row[f] == null ? '' : String(row[f]))).join(' ').toLowerCase(); return q.some((x) => t.includes(x)); }) : rows.slice();
+  const s = P['s_' + k];
+  if (s) { const [f, d] = String(s).split(':'); const m = d === 'asc' ? 1 : -1; r.sort((a, b) => { const x = parseFloat(a[f]), y = parseFloat(b[f]); if (isNaN(x) && isNaN(y)) return 0; if (isNaN(x)) return 1; if (isNaN(y)) return -1; return (x - y) * m; }); }
+  return r;
+};
+Object.keys(window.lvF2).forEach((k) => dash.draw('cnt-' + k, (el) => { const d = dash.data(window.lvF2[k].id); if (d.status !== 'ok' || !Array.isArray(d.data)) { el.textContent = ''; return; } const n = window.lvFilt(k, d.data).length; el.textContent = n === d.data.length ? d.data.length + ' rows' : 'Showing ' + n + ' of ' + d.data.length; }));
+document.querySelectorAll('.lv-tools [data-p]').forEach((el) => {
+  const p = el.dataset.p; let t;
+  const v = (dash.params() || {})[p]; if (v != null && v !== '') el.value = v;
+  el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', () => { clearTimeout(t); t = setTimeout(() => dash.setParams({[p]: el.value || null}), el.tagName === 'SELECT' ? 0 : 250); });
+});
 dash.calc('spend_tot', {inputs: ['spend_daily', 'spend_intraday', 'ads'], title: 'Meta spend tracker totals', description: 'Today: latest Meta spend reading vs the day plan, with expected-by-now = day plan x share of the day gone (IST). BFS to date = Meta spend from 18 Nov incl. today. Budget left = 70 L minus BFS to date.', fn: (daily, intra, ads) => {
   const last = intra.length ? intra.reduce((a, b) => (a.as_of > b.as_of ? a : b)) : null;
   const meta = ads.find((r) => r.platform === 'Meta') || {};
@@ -96,9 +113,9 @@ dash.draw('nx-reln', mvV('cut_count', spG.N));
 dash.draw('nx-add', mvV('added', (v) => '₹' + spG.N(v)));
 dash.draw('nx-addn', mvV('scale_count', spG.N));
 dash.draw('nx-new', mvV('for_new', (v) => '₹' + spG.N(v)));
-dash.draw('b-moves', (tb) => spTable(tb, 'ad_moves', [{f: 'campaign', l: 1, w: 1}, {f: 'focus', l: 1}, {f: 'spend', fmt: spG.N}, {f: 'roas', fmt: spG.X, cls: (r) => r.roas >= r.target ? 'ok' : r.roas >= r.floor ? 'warn' : 'bad'}, {f: 'target', fmt: spG.X}, {f: 'floor', fmt: spG.X}, {f: 'move', l: 1, pill: (r) => /^Scale/.test(r.move) ? 'ok' : /^Pause|^Cut/.test(r.move) ? 'bad' : /^Watch/.test(r.move) ? 'warn' : ''}, {f: 'change', fmt: (v) => (v > 0 ? '+' : '') + spG.N(v)}], {sort: (a, b) => Math.abs(b.change) - Math.abs(a.change) || b.spend - a.spend, key: 'id'}));
-dash.draw('b-nextads', (tb) => spTable(tb, 'next_ads', [{f: 'priority', fmt: spG.N}, {f: 'play', l: 1, pill: (r) => r.priority === 1 ? 'ok' : r.priority === 4 ? 'warn' : ''}, {f: 'category', l: 1}, {f: 'styles', l: 1, w: 1}, {f: 'stock', fmt: spG.N}, {f: 'budget', fmt: (v) => v ? spG.N(v) : '—'}, {f: 'what_to_run', l: 1, w: 1}], {key: 'id'}));
-dash.draw('b-adsout', (tb) => spTable(tb, 'ads_out', [{f: 'style', l: 1}, {f: 'name', l: 1, w: 1}, {f: 'reason', l: 1, pill: (r) => /Sold out/.test(r.reason) ? 'bad' : 'warn'}, {f: 'sold_today', fmt: spG.N}, {f: 'atp', fmt: spG.N}], {key: 'style'}));
+dash.draw('b-moves', (tb) => spTable(tb, 'ad_moves', [{f: 'campaign', l: 1, w: 1}, {f: 'focus', l: 1}, {f: 'spend', fmt: spG.N}, {f: 'roas', fmt: spG.X, cls: (r) => r.roas >= r.target ? 'ok' : r.roas >= r.floor ? 'warn' : 'bad'}, {f: 'target', fmt: spG.X}, {f: 'floor', fmt: spG.X}, {f: 'move', l: 1, pill: (r) => /^Scale/.test(r.move) ? 'ok' : /^Pause|^Cut/.test(r.move) ? 'bad' : /^Watch/.test(r.move) ? 'warn' : ''}, {f: 'change', fmt: (v) => (v > 0 ? '+' : '') + spG.N(v)}], {sort: (a, b) => Math.abs(b.change) - Math.abs(a.change) || b.spend - a.spend, key: 'id', fk: 'moves'}));
+dash.draw('b-nextads', (tb) => spTable(tb, 'next_ads', [{f: 'priority', fmt: spG.N}, {f: 'play', l: 1, pill: (r) => r.priority === 1 ? 'ok' : r.priority === 4 ? 'warn' : ''}, {f: 'category', l: 1}, {f: 'styles', l: 1, w: 1}, {f: 'stock', fmt: spG.N}, {f: 'budget', fmt: (v) => v ? spG.N(v) : '—'}, {f: 'what_to_run', l: 1, w: 1}], {key: 'id', fk: 'next'}));
+dash.draw('b-adsout', (tb) => spTable(tb, 'ads_out', [{f: 'style', l: 1}, {f: 'name', l: 1, w: 1}, {f: 'reason', l: 1, pill: (r) => /Sold out/.test(r.reason) ? 'bad' : 'warn'}, {f: 'sold_today', fmt: spG.N}, {f: 'atp', fmt: spG.N}], {key: 'style', fk: 'out'}));
 dash.draw('c-spend-daily', (el) => {
   const d = dash.data('spend_daily'); el.replaceChildren();
   if (d.status !== 'ok') { el.textContent = d.status === 'error' ? 'Could not load.' : '—'; return; }
