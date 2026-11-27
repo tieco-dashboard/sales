@@ -104,6 +104,11 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
 .lv-tile .v.ly-old{color:var(--color-fg-muted)}
 .ly-pair .v{font-size:var(--cds-font-size-heading)!important;white-space:nowrap}
 .ly-sw{display:inline-block;width:.75rem;height:.75rem;border-radius:2px;vertical-align:-1px;margin-right:.3rem}
+.tg-bn{border:1px solid var(--color-border-line);border-radius:var(--cds-radius);background:var(--color-panel);padding:var(--cds-pad-lg);display:flex;flex-direction:column;gap:var(--cds-gap-md)}
+.tg-bn-k{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);font-weight:500}
+.tg-bn-v{font-family:var(--font-anthropic-serif);font-size:2.4rem;line-height:1.1;font-variant-numeric:tabular-nums}
+.tg-bn-s{font-size:var(--cds-font-size-body)}
+.tg-bn-t tr.now td{font-weight:600}
 .lv-pill{display:inline-block;padding:0 .45rem;border-radius:999px;border:1px solid currentColor;line-height:1.5}
 </style>
 <div class="lv">
@@ -112,6 +117,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
     <p class="lv-sub">Team view. Online from Unicommerce, stores from Logic ERP, ads from Meta and Google Ads. Net = excl. GST. Updated every hour during BFS, then daily. Last update: <b id="gh-asof">—</b>.</p>
   </header>
   <p class="lv-take" id="takeaway">Today so far: net sales <b data-draw="tk-net" data-source="summary" data-field="total_lakh" data-row="0">—</b> lakh excl. GST, <b data-draw="tk-ly" data-source="vs_ly">—</b> of last year's BFS day 1 full-day total, with <b data-draw="tk-spend" data-source="ads_tot" data-field="spend_today" data-row="0">—</b> lakh of ad spend.</p>
+  <div class="tg-bn" id="bfs-banner" data-draw="tg-banner" data-source="chan_target chan_daily sales summary ly_hour ly_meta"></div>
   <nav class="lv-tabs" role="tablist" aria-label="Pages">
     <button class="lv-tab" role="tab" data-tab="today" aria-selected="true">Today (live)</button>
     <button class="lv-tab" role="tab" data-tab="mkt" aria-selected="false">Marketing</button>
@@ -237,7 +243,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
   </section>
 </div>
 <script src="spend.js?v=6b40a76b"></script>
-<script src="tg.js?v=6862ddaf"></script>
+<script src="tg.js?v=51987673"></script>
 <script>
 window.lvF = {L2: d3.format(',.2f'), N: d3.format(',.0f'), P: d3.format('.0%'), P1: d3.format('.1%'), X: d3.format('.1f')};
 window.lvTime = (s) => { const d = new Date(s); return isNaN(d) ? '—' : d.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}); };
