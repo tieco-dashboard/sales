@@ -117,7 +117,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
     <button class="lv-tab" role="tab" data-tab="ly" aria-selected="false">BFS vs last year</button>
     <button class="lv-tab" role="tab" data-tab="gp" aria-selected="false">Management GP</button>
     <button class="lv-tab" role="tab" data-tab="mkt" aria-selected="false">Marketing</button>
-    <a href="../#sales" target="_top" style="padding:var(--cds-pad-sm) var(--cds-pad-md);color:var(--color-fg-muted);text-decoration:none;margin-left:auto">Sales &amp; inventory (FY) ↗</a>
+    <button class="lv-tab" role="tab" data-tab="fy" aria-selected="false">Sales &amp; inventory (FY)</button>
   </nav>
 
   <section class="lv-page" id="today" data-page="today">
@@ -278,10 +278,23 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
       <div class="lv-tw" style="max-height:40rem"><table data-source="campaigns" data-row-key="id"><thead><tr><th class="l" data-field="platform">Platform</th><th class="l" data-field="campaign">Campaign</th><th class="l" data-field="focus">Focus</th><th data-field="spend">Spend ₹</th><th data-field="purchases">Purchases</th><th data-field="revenue">Revenue ₹</th><th data-field="roas">ROAS</th><th data-field="cpa">Cost / purchase ₹</th><th class="l">Do</th></tr></thead><tbody data-draw="b-camp"></tbody></table></div></div>
     </details>
   </section>
+  <section class="lv-page" id="fy" data-page="fy" hidden>
+    <p class="lv-note">Sales vs the ₹45 Cr FY26-27 target, day wise, run rate and deficit, store KPIs, categories, inventory and articles. Net sales excl. GST; updated daily from the Uniware, POS, stock and footfall files (data date shown at the top of the section).</p>
+    <iframe id="fy-frame" title="Sales and inventory, FY26-27" src="fy.html" style="width:100%;height:2600px;border:0;display:block;background:transparent"></iframe>
+  </section>
 </div>
 <script src="spend.js?v=6b40a76b"></script>
 <script src="ly.js?v=16fe2a71"></script>
 <script src="tg.js?v=3cc15d0f"></script>
+<script>
+// Sales & inventory tab: size the embedded page to its content so the whole page scrolls as one.
+(function () {
+  const f = document.getElementById('fy-frame'); if (!f) return;
+  const fit = () => { try { const d = f.contentDocument; if (d && d.documentElement) { const h = Math.max(d.documentElement.scrollHeight, d.body ? d.body.scrollHeight : 0); if (h > 200) f.style.height = (h + 24) + 'px'; } } catch (e) {} };
+  f.addEventListener('load', () => { fit(); try { new ResizeObserver(fit).observe(f.contentDocument.body); } catch (e) { setInterval(fit, 1500); } });
+  document.querySelectorAll('.lv-tab[data-tab="fy"]').forEach((b) => b.addEventListener('click', () => setTimeout(fit, 50)));
+})();
+</script>
 <script>
 window.lvF = {L2: d3.format(',.2f'), N: d3.format(',.0f'), P: d3.format('.0%'), P1: d3.format('.1%'), X: d3.format('.1f')};
 window.lvTime = (s) => { const d = new Date(s); return isNaN(d) ? '—' : d.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}); };
