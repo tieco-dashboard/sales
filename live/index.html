@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>TIECO Live Sales &amp; Marketing</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+:root{--font-anthropic-sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--font-anthropic-serif:Georgia,"Times New Roman",serif;
+--color-bg:#f7f7f5;--color-fg:#1f1f1e;--color-fg-muted:#6b6a66;--color-panel:#fff;--color-border-line:#e4e2dc;
+--color-ok:#2f8a57;--color-warn:#b26a00;--color-bad:#c23b2a;--cds-chart-grid:#ecebe6;--cds-text-secondary:#6b6a66;
+--cds-surface-popover:#fff;--cds-border:#dcdad3;--cds-shadow-popover:0 4px 16px rgba(0,0,0,.12);
+--cds-gap-xs:4px;--cds-gap-sm:8px;--cds-gap-md:12px;--cds-gap-lg:20px;--cds-pad-xs:4px;--cds-pad-sm:8px;--cds-pad-md:12px;--cds-pad-lg:16px;--cds-radius:8px;
+--cds-font-size-caption:12px;--cds-font-size-body:15px;--cds-font-size-heading:16px;--cds-font-size-title:26px;--cds-font-weight-medium:600}
+@media (prefers-color-scheme: dark){:root{--color-bg:#1b1b1a;--color-fg:#ecebe6;--color-fg-muted:#a3a19a;--color-panel:#242423;--color-border-line:#3a3936;--cds-chart-grid:#33322f;--cds-text-secondary:#a3a19a;--cds-surface-popover:#2c2c2a;--cds-border:#44433f;--color-ok:#5cc08a;--color-warn:#e0a040;--color-bad:#ef6a57}}
+html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
+#dash-root{max-width:1280px;margin:0 auto;padding:24px 16px 48px}
+.lv svg text{fill:var(--cds-text-secondary)}
+.lv .domain,.lv .tick line{stroke:var(--color-border-line)}
+</style>
+<script>
+(function(){
+  var D = null, calcs = {}, defs = [], draws = [], datas = [];
+  function runDraw(id, fn){ document.querySelectorAll('[data-draw="'+id+'"]').forEach(function(el){ if (el.closest('[hidden]')) return; try { fn(el); } catch(e){ console.error(id, e); } }); }
+  function runAll(){ datas.forEach(function(f){ try{f();}catch(e){console.error(e);} }); draws.forEach(function(d){ runDraw(d[0], d[1]); }); }
+  window.dash = {
+    colors: ['#3b6fd8','#e0883a','#2f9e6e','#9a6fd6','#d65f8f','#3fa7c4','#b5a23a','#8a929e'],
+    data: function(id){
+      if (id in calcs) return {status: D ? 'ok' : 'loading', data: calcs[id], meta: []};
+      if (!D) return {status: 'loading', data: [], meta: []};
+      var d = D[id]; return d ? {status: 'ok', data: d, columns: Object.keys(d[0] || {}), meta: []} : {status: 'missing', data: [], meta: []};
+    },
+    calc: function(id, o){ defs.push([id, o]); calcs[id] = null; },
+    draw: function(id, fn){ draws.push([id, fn]); if (D) runDraw(id, fn); },
+    onData: function(fn){ datas.push(fn); },
+    params: function(){ return {}; }, setParams: function(){}, resetParams: function(){}, refresh: function(){}, loader: function(){},
+    setLink: function(n){ try { history.replaceState(null, '', '#' + n); } catch(e){} }
+  };
+  fetch('data.json?t=' + Date.now(), {cache: 'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+    D = j.datasets;
+    defs.forEach(function(x){ try { calcs[x[0]] = x[1].fn.apply(null, x[1].inputs.map(function(i){ return (i in calcs) ? calcs[i] : (D[i] || []); })); } catch(e){ console.error(x[0], e); } });
+    var a = document.getElementById('gh-asof'); if (a) a.textContent = new Date(j.as_of).toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'});
+    runAll();
+  }).catch(function(e){ var a = document.getElementById('gh-asof'); if (a) a.textContent = 'could not load data'; console.error(e); });
+  document.addEventListener('click', function(e){ if (e.target.closest('.lv-tab')) setTimeout(runAll, 0); });
+  var t; addEventListener('resize', function(){ clearTimeout(t); t = setTimeout(runAll, 150); });
+})();
+</script>
+</head>
+<body>
+<div id="dash-root">
+<style>
+.lv{display:flex;flex-direction:column;gap:var(--cds-gap-lg);font-family:var(--font-anthropic-sans);color:var(--color-fg)}
+.lv [hidden]{display:none!important}
+.lv h1{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0}
+.lv-sub{margin:0;color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)}
+.lv-take{margin:0;font-size:var(--cds-font-size-body);line-height:1.5;max-width:75ch}
+.lv-tabs{display:flex;flex-wrap:wrap;gap:var(--cds-gap-xs);border-bottom:1px solid var(--color-border-line)}
+.lv-tab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;padding:var(--cds-pad-sm) var(--cds-pad-md);font:inherit;color:var(--color-fg-muted);cursor:pointer;margin-bottom:-1px}
+.lv-tab[aria-selected=true]{color:var(--color-fg);border-bottom-color:var(--color-fg);font-weight:500}
+.lv-page{display:flex;flex-direction:column;gap:var(--cds-gap-lg)}
+.lv-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:var(--cds-gap-md)}
+.lv-tile,.lv-card{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);min-width:0}
+.lv-tile{padding:var(--cds-pad-md) var(--cds-pad-lg);display:flex;flex-direction:column;gap:var(--cds-gap-xs)}
+.lv-tile .k{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.lv-tile .v{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums;line-height:1.15}
+.lv-tile .s{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.lv-card{padding:var(--cds-pad-lg);display:flex;flex-direction:column;gap:var(--cds-gap-sm)}
+.lv-card h2{margin:0;font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium)}
+.lv-note{margin:0;font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.lv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:var(--cds-gap-md)}
+.lv-chart{position:relative;min-height:240px}
+.lv-chart svg{display:block;width:100%}
+.lv-chart text{fill:var(--cds-text-secondary);font-size:11px}
+.lv-tip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);box-shadow:var(--cds-shadow-popover);border-radius:var(--cds-radius);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);white-space:nowrap;z-index:2}
+.lv-tw{overflow:auto;max-height:34rem}
+.lv table{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.lv th{position:sticky;top:0;background:var(--color-panel);text-align:right;font-weight:500;color:var(--color-fg-muted);padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);white-space:nowrap}
+.lv td{text-align:right;padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);white-space:nowrap}
+.lv th.l,.lv td.l{text-align:left}
+.lv td.w{white-space:normal;min-width:14rem}
+.lv tr.tot td{font-weight:600}
+.lv .ok{color:var(--color-ok)}.lv .warn{color:var(--color-warn)}.lv .bad{color:var(--color-bad)}
+.lv-pill{display:inline-block;padding:0 .45rem;border-radius:999px;border:1px solid currentColor;line-height:1.5}
+</style>
+<div class="lv">
+  <header id="top">
+    <h1>TIECO Live Sales &amp; Marketing</h1>
+    <p class="lv-sub">Team view. Online from Unicommerce, stores from Logic ERP, ads from Meta and Google Ads. Net = excl. GST. Updated every hour during BFS, then daily. Last update: <b id="gh-asof">—</b>.</p>
+  </header>
+  <p class="lv-take" id="takeaway">Today so far: net sales <b data-draw="tk-net" data-source="summary" data-field="total_lakh" data-row="0">—</b> lakh excl. GST, <b data-draw="tk-ly" data-source="vs_ly">—</b> of last year's BFS day 1 full-day total, with <b data-draw="tk-spend" data-source="ads_tot" data-field="spend_today" data-row="0">—</b> lakh of ad spend.</p>
+  <nav class="lv-tabs" role="tablist" aria-label="Pages">
+    <button class="lv-tab" role="tab" data-tab="today" aria-selected="true">Today (live)</button>
+    <button class="lv-tab" role="tab" data-tab="mkt" aria-selected="false">Marketing</button>
+  </nav>
+
+  <section class="lv-page" id="today" data-page="today">
+    <div class="lv-tiles">
+      <div class="lv-tile"><span class="k">Total net sales (₹ lakh)</span><span class="v" data-draw="t-total" data-source="summary" data-field="total_lakh" data-row="0">—</span><span class="s">As of <span data-draw="t-asof">—</span></span></div>
+      <div class="lv-tile"><span class="k">Online net (₹ lakh)</span><span class="v" data-draw="t-online" data-source="summary" data-field="online_lakh" data-row="0">—</span><span class="s"><span data-draw="t-orders" data-source="summary" data-field="online_orders" data-row="0">—</span> orders</span></div>
+      <div class="lv-tile"><span class="k">Store net (₹ lakh)</span><span class="v" data-draw="t-store" data-source="summary" data-field="store_lakh" data-row="0">—</span><span class="s"><span data-draw="t-bills" data-source="summary" data-field="store_bills" data-row="0">—</span> bills, excl. Head Office</span></div>
+      <div class="lv-tile"><span class="k">vs LY BFS day 1 full day</span><span class="v" data-draw="t-ly" data-source="vs_ly">—</span><span class="s">LY ₹<span data-draw="t-lyv" data-source="summary" data-field="ly_day_lakh" data-row="0">—</span> lakh</span></div>
+      <div class="lv-tile"><span class="k">Online stock, ATP (pcs)</span><span class="v" data-draw="t-atp" data-source="summary" data-field="online_atp" data-row="0">—</span><span class="s">Good + Virtual, clothing</span></div>
+      <div class="lv-tile"><span class="k">Store stock (pcs)</span><span class="v" data-draw="t-ss" data-source="summary" data-field="store_stock" data-row="0">—</span><span class="s">₹<span data-draw="t-ssm" data-source="summary" data-field="store_stock_mrp_cr" data-row="0">—</span> Cr at MRP</span></div>
+    </div>
+    <div class="lv-grid">
+      <div class="lv-card" id="trend"><h2>Net sales through the day (₹ lakh)</h2><div class="lv-chart" data-draw="c-trend" data-source="history"></div></div>
+      <div class="lv-card" id="cat"><h2>Online net sales by category today (₹ lakh)</h2><div class="lv-chart" data-draw="c-cat" data-source="live_category"></div></div>
+    </div>
+    <div class="lv-card" id="channels"><h2>Sales by channel and store</h2>
+      <div class="lv-tw"><table data-source="sales" data-row-key="channel"><thead><tr><th class="l" data-field="channel">Channel / store</th><th class="l" data-field="type">Type</th><th data-field="orders">Orders / bills</th><th data-field="net_lakh">Net ₹ L</th></tr></thead><tbody data-draw="b-sales"></tbody></table></div></div>
+    <div class="lv-card" id="alerts"><h2>Stock alerts on today's bestsellers</h2>
+      <div class="lv-tw"><table data-source="alerts" data-row-key="style"><thead><tr><th class="l" data-field="style">Style</th><th class="l" data-field="name">Product</th><th class="l" data-field="status">Status</th><th data-field="online_atp">Online ATP</th><th data-field="virtual">of which virtual</th></tr></thead><tbody data-draw="b-alerts"></tbody></table></div></div>
+    <div class="lv-grid">
+      <div class="lv-card" id="stockcat"><h2>Stock by category (pcs)</h2>
+        <div class="lv-tw"><table data-source="live_category" data-row-key="category"><thead><tr><th class="l" data-field="category">Category</th><th data-field="online_atp">Online ATP</th><th data-field="store_stock">Store stock</th></tr></thead><tbody data-draw="b-stockcat"></tbody></table></div></div>
+      <div class="lv-card" id="storestock"><h2>Store closing stock</h2>
+        <div class="lv-tw"><table data-source="stores" data-row-key="store"><thead><tr><th class="l" data-field="store">Store</th><th data-field="pieces">Pieces</th><th data-field="mrp_cr">MRP ₹ Cr</th></tr></thead><tbody data-draw="b-stores"></tbody></table></div></div>
+    </div>
+  </section>
+
+  <section class="lv-page" id="mkt" data-page="mkt" hidden>
+    <div class="lv-card" id="liq"><h2>BFS liquidation plan: sell what's already in the warehouse</h2>
+      <p class="lv-note">No replenishment and no store pulls during BFS, so spend and placement go to stock that is already in the online warehouse. Physical ATP only (Good inventory); virtual stock is shown separately. "Left on 6 Dec" = ATP minus today's pace carried to the end of BFS. Day 1 is usually the strongest day, so the real leftover will likely be higher. As of <span data-draw="lq-asof" data-source="liq_summary" data-field="as_of" data-row="0">—</span>.</p>
+      <div class="lv-tiles">
+        <div class="lv-tile"><span class="k">Online ATP, physical (pcs)</span><span class="v" data-draw="lq-atp" data-source="liq_summary" data-field="atp" data-row="0">—</span><span class="s">plus <span data-draw="lq-virt" data-source="liq_summary" data-field="virtual" data-row="0">—</span> virtual</span></div>
+        <div class="lv-tile"><span class="k">Left on 6 Dec at today's pace</span><span class="v" data-draw="lq-left" data-source="liq_summary" data-field="left_after_bfs" data-row="0">—</span><span class="s"><span data-draw="lq-pct" data-source="liq_summary" data-field="pct_left" data-row="0">—</span>% of physical ATP</span></div>
+        <div class="lv-tile"><span class="k">Not live on the website (pcs)</span><span class="v" data-draw="lq-nl" data-source="liq_summary" data-field="not_live_units" data-row="0">—</span><span class="s"><span data-draw="lq-nls" data-source="liq_summary" data-field="not_live_styles" data-row="0">—</span> styles: not found, draft or unpublished</span></div>
+        <div class="lv-tile"><span class="k">No sale today (pcs)</span><span class="v" data-draw="lq-z" data-source="liq_summary" data-field="zero_sale_units" data-row="0">—</span><span class="s"><span data-draw="lq-zs" data-source="liq_summary" data-field="zero_sale_styles" data-row="0">—</span> styles with 20+ pcs</span></div>
+      </div>
+      <div class="lv-grid">
+        <div><h2>By category</h2>
+          <div class="lv-tw"><table data-source="liq_category" data-row-key="category"><thead><tr><th class="l" data-field="category">Category</th><th data-field="atp">ATP</th><th data-field="sold_today">Sold today</th><th data-field="left_after_bfs">Left on 6 Dec</th><th data-field="pct_left">% left</th><th data-field="zero_sale_units">No-sale pcs</th><th data-field="not_live_units">Not live pcs</th></tr></thead><tbody data-draw="b-lqcat"></tbody></table></div></div>
+        <div><h2>Action summary</h2>
+          <div class="lv-tw"><table data-source="liq_actions" data-row-key="action"><thead><tr><th class="l" data-field="action">Action</th><th data-field="styles">Styles</th><th data-field="atp">ATP pcs</th><th class="l" data-field="what">What it means</th></tr></thead><tbody data-draw="b-lqact"></tbody></table></div></div>
+      </div>
+      <h2>Style list</h2>
+      <p class="lv-note">Ordered by action, then by pieces left on 6 Dec. Website status was checked on Shopify for styles with 50+ pcs and no sale today.</p>
+      <div class="lv-tw" style="max-height:44rem"><table data-source="liquidation" data-row-key="style"><thead><tr><th class="l" data-field="action">Action</th><th class="l" data-field="style">Style</th><th class="l" data-field="name">Product</th><th class="l" data-field="category">Category</th><th class="l" data-field="web">Website</th><th data-field="atp">ATP</th><th data-field="virtual">Virtual</th><th data-field="sold_today">Sold today</th><th data-field="days_cover">Days of stock</th><th data-field="left_after_bfs">Left on 6 Dec</th><th data-field="sizes_in_stock">Sizes in stock</th></tr></thead><tbody data-draw="b-liq"></tbody></table></div></div>
+    <div class="lv-tiles">
+      <div class="lv-tile"><span class="k">Ad spend today (₹ lakh)</span><span class="v" data-draw="m-spend" data-source="ads_tot" data-field="spend_today" data-row="0">—</span><span class="s">Meta + Google</span></div>
+      <div class="lv-tile"><span class="k">Platform-reported revenue (₹ lakh)</span><span class="v" data-draw="m-rev" data-source="ads_tot" data-field="revenue_today" data-row="0">—</span><span class="s">ROAS <span data-draw="m-roas" data-source="ads_tot" data-field="roas_today" data-row="0">—</span>×, incl. GST, before returns</span></div>
+      <div class="lv-tile"><span class="k">Website MER</span><span class="v" data-draw="m-mer" data-source="ads_tot" data-field="mer" data-row="0">—</span><span class="s">Website net sales ÷ total ad spend</span></div>
+      <div class="lv-tile"><span class="k">Target ROAS</span><span class="v" data-draw="m-be" data-source="ads" data-field="target_roas" data-row="0">—</span><span class="s">BFS media plan floor for this phase</span></div>
+      <div class="lv-tile"><span class="k">BFS budget used (MTD)</span><span class="v" data-draw="m-bud" data-source="ads_tot" data-field="budget_used" data-row="0">—</span><span class="s">₹<span data-draw="m-mtd" data-source="ads_tot" data-field="spend_mtd" data-row="0">—</span> L of ₹<span data-draw="m-bb" data-source="ads_tot" data-field="bfs_budget" data-row="0">—</span> L</span></div>
+    </div>
+    <div class="lv-card" id="tracker"><h2>Active spend tracker</h2>
+      <p class="lv-note">Today against the day plan from the BFS media plan, and month to date against the BFS budget. ₹ lakh.</p>
+      <div class="lv-tw"><table data-source="ads" data-row-key="platform"><thead><tr><th class="l" data-field="platform">Platform</th><th data-field="campaigns_live">Live campaigns</th><th data-field="spend_today">Spend today</th><th data-field="day_plan">Day plan</th><th>Pace</th><th data-field="roas_today">ROAS today</th><th data-field="spend_mtd">Spend MTD</th><th data-field="roas_mtd">ROAS MTD</th><th data-field="bfs_budget">BFS budget</th></tr></thead><tbody data-draw="b-track"></tbody></table></div></div>
+    <div class="lv-grid">
+      <div class="lv-card" id="focus-chart"><h2>Spend vs sales by focus, today</h2>
+        <p class="lv-note">₹ lakh. Ad spend by the category a campaign targets (from its name) against platform-reported revenue.</p>
+        <div class="lv-chart" data-draw="c-focus" data-source="focus"></div></div>
+      <div class="lv-card" id="inv-move"><h2>Is the stock there for the spend?</h2>
+        <p class="lv-note">Today's ad spend, online sales and online stock (ATP) per category. Days of stock = ATP ÷ today's units pace.</p>
+        <div class="lv-tw"><table data-source="inv_vs_spend" data-row-key="category"><thead><tr><th class="l" data-field="category">Category</th><th data-field="spend">Spend ₹ L</th><th data-field="sales">Online sales ₹ L</th><th data-field="atp">Online ATP</th><th class="l" data-field="signal">Signal</th></tr></thead><tbody data-draw="b-inv"></tbody></table></div></div>
+    </div>
+    <div class="lv-card" id="campaigns"><h2>Live campaigns and what to do</h2>
+      <p class="lv-note">Sorted by spend. Scale: ROAS at least 1.5× the target. Hold: at or above target. Fix or cut: below target with ₹10K+ spent. Learning: Google campaigns still in learning. Platform ROAS overstates real return (it counts GST, returns and overlap between platforms).</p>
+      <div class="lv-tw" style="max-height:40rem"><table data-source="campaigns" data-row-key="id"><thead><tr><th class="l" data-field="platform">Platform</th><th class="l" data-field="campaign">Campaign</th><th class="l" data-field="focus">Focus</th><th data-field="spend">Spend ₹</th><th data-field="purchases">Purchases</th><th data-field="revenue">Revenue ₹</th><th data-field="roas">ROAS</th><th data-field="cpa">Cost / purchase ₹</th><th class="l">Do</th></tr></thead><tbody data-draw="b-camp"></tbody></table></div></div>
+  </section>
+</div>
+<script>
+window.lvF = {L2: d3.format(',.2f'), N: d3.format(',.0f'), P: d3.format('.0%'), P1: d3.format('.1%'), X: d3.format('.1f')};
+window.lvTime = (s) => { const d = new Date(s); return isNaN(d) ? '—' : d.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}); };
+dash.calc('vs_ly', {inputs: ['summary'], title: 'Share of last year BFS day 1', description: "Today's total net sales ÷ last year's BFS day 1 full-day net sales.", fn: (summary) => summary[0] && +summary[0].ly_day_lakh ? +summary[0].total_lakh / +summary[0].ly_day_lakh : null});
+dash.calc('ads_tot', {inputs: ['ads', 'sales'], title: 'Ad totals', description: 'Meta + Google; MER = website (Shopify) net sales ÷ total spend; budget used = MTD spend ÷ BFS budget.', fn: (ads, sales) => {
+  const s = (k) => ads.reduce((a, r) => a + (+r[k] || 0), 0);
+  const web = sales.find((r) => r.channel === 'Shopify');
+  const sp = s('spend_today');
+  return [{spend_today: Math.round(sp / 1e3) / 100, revenue_today: Math.round(s('revenue_today') / 1e3) / 100, roas_today: sp ? s('revenue_today') / sp : null, mer: web && sp ? (+web.net_lakh * 1e5) / sp : null, spend_mtd: Math.round(s('spend_mtd') / 1e3) / 100, bfs_budget: Math.round(s('bfs_budget') / 1e3) / 100, budget_used: s('bfs_budget') ? s('spend_mtd') / s('bfs_budget') : null}];
+}});
+dash.calc('focus', {inputs: ['campaigns'], title: 'Spend by focus', description: 'Campaign spend and platform revenue grouped by the category in the campaign name, ₹ lakh.', fn: (campaigns) => {
+  const m = d3.rollups(campaigns, (v) => ({spend: d3.sum(v, (r) => +r.spend) / 1e5, revenue: d3.sum(v, (r) => +r.revenue) / 1e5}), (r) => r.focus);
+  return m.map(([focus, v]) => ({focus, spend: Math.round(v.spend * 100) / 100, revenue: Math.round(v.revenue * 100) / 100})).sort((a, b) => b.spend - a.spend);
+}});
+dash.calc('inv_vs_spend', {inputs: ['campaigns', 'live_category'], title: 'Spend vs stock by category', description: 'Ad spend by focus category beside online net sales and online ATP for the same category; signal compares stock with selling pace.', fn: (campaigns, cat) => {
+  const map = {'Kurta': 'Kurta', 'Dress': 'Dress', 'Short tops & shirts': 'Short tops & shirts', 'Co-ord set': 'Co-ord set'};
+  return cat.map((c) => {
+    const spend = d3.sum(campaigns.filter((r) => map[r.focus] === c.category || (r.focus === 'Tops & dresses' && (c.category === 'Dress' || c.category === 'Short tops & shirts')) ), (r) => +r.spend * (r.focus === 'Tops & dresses' ? 0.5 : 1)) / 1e5;
+    const sales = +c.online_net_lakh, atp = +c.online_atp;
+    const ratio = sales ? atp / sales : null;
+    const signal = !sales ? 'No sales yet' : ratio < 150 ? 'Selling through: no extra spend' : ratio > 1500 ? 'Heavy stock: shift spend here' : 'Balanced';
+    return {category: c.category, spend: Math.round(spend * 100) / 100, sales, atp, signal};
+  });
+}});
+dash.calc('liq_actions', {inputs: ['liquidation'], title: 'Liquidation actions', description: 'Styles and physical ATP pieces per liquidation action.', fn: (rows) => {
+  const what = {'Get it live today': 'Stock is in the warehouse but shoppers cannot buy it. List or publish first; ads cannot help until then.', 'Liquidate: deep stock, slow': 'Live but barely selling. Move ad spend, homepage and collection slots here; consider an extra offer or bundle.', 'New today: give ads and placement': 'Published today. Give it ads and placement now; judge it tomorrow.', 'Push: stock outlasts BFS': 'Selling slowly with stock to spare. Add to ads and creatives.', 'Scale: selling, stock lasts': 'Proven sellers with enough stock for all of BFS. Best place for more spend.', 'Will sell out: no extra spend': 'Will clear before 6 Dec without help. Keep it organic; move ad money elsewhere.', 'Stop ads: sold out': 'No stock. Pause ads and swap creatives.', 'Virtual stock only: confirm it ships': 'Only virtual stock left. Confirm it can be shipped; if not, pause ads.'};
+  const m = d3.rollups(rows, (v) => ({styles: v.length, atp: d3.sum(v, (r) => +r.atp), p: v[0].priority}), (r) => r.action);
+  return m.map(([action, v]) => ({action, styles: v.styles, atp: v.atp, priority: v.p, what: what[action] || ''})).sort((a, b) => a.priority - b.priority);
+}});
+function lvSet(el, txt) { el.textContent = txt; }
+function lvVal(id, field, fmt, row) { return (el) => { const d = dash.data(id); if (d.status !== 'ok' || !d.data || !d.data[row || 0]) { el.textContent = '—'; return; } const v = d.data[row || 0][field]; el.textContent = v == null || v === '' ? '—' : fmt(+v); }; }
+function lvCalc(id, fmt) { return (el) => { const d = dash.data(id); el.textContent = d.status === 'ok' && d.data != null ? fmt(d.data) : '—'; }; }
+const F = window.lvF;
+dash.draw('tk-ly', lvCalc('vs_ly', F.P));
+dash.draw('tk-spend', lvVal('ads_tot', 'spend_today', (v) => '₹' + F.L2(v)));
+dash.draw('tk-net', lvVal('summary', 'total_lakh', (v) => '₹' + F.L2(v)));
+dash.draw('t-total', lvVal('summary', 'total_lakh', F.L2));
+dash.draw('t-online', lvVal('summary', 'online_lakh', F.L2));
+dash.draw('t-store', lvVal('summary', 'store_lakh', F.L2));
+dash.draw('t-orders', lvVal('summary', 'online_orders', F.N));
+dash.draw('t-bills', lvVal('summary', 'store_bills', F.N));
+dash.draw('t-lyv', lvVal('summary', 'ly_day_lakh', F.L2));
+dash.draw('t-atp', lvVal('summary', 'online_atp', F.N));
+dash.draw('t-ss', lvVal('summary', 'store_stock', F.N));
+dash.draw('t-ssm', lvVal('summary', 'store_stock_mrp_cr', F.L2));
+dash.draw('t-ly', lvCalc('vs_ly', F.P));
+dash.draw('t-asof', (el) => { const d = dash.data('summary'); el.textContent = d.status === 'ok' && d.data[0] ? window.lvTime(d.data[0].as_of) : '—'; });
+dash.draw('m-spend', lvVal('ads_tot', 'spend_today', F.L2));
+dash.draw('m-rev', lvVal('ads_tot', 'revenue_today', F.L2));
+dash.draw('m-roas', lvVal('ads_tot', 'roas_today', F.X));
+dash.draw('m-mer', lvVal('ads_tot', 'mer', (v) => F.X(v) + '×'));
+dash.draw('m-be', lvVal('ads', 'target_roas', (v) => F.X(v) + '×'));
+dash.draw('m-bud', lvVal('ads_tot', 'budget_used', F.P));
+dash.draw('m-mtd', lvVal('ads_tot', 'spend_mtd', F.L2));
+dash.draw('m-bb', lvVal('ads_tot', 'bfs_budget', F.L2));
+document.querySelectorAll('.lv-tab').forEach((b) => b.addEventListener('click', () => {
+  document.querySelectorAll('.lv-tab').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+  document.querySelectorAll('.lv-page').forEach((s) => { s.hidden = s.dataset.page !== b.dataset.tab; });
+  dash.setLink(b.dataset.tab);
+}));
+const lvHash = location.hash.slice(1);
+document.querySelectorAll('.lv-tab').forEach((b) => { if (b.dataset.tab === lvHash) b.click(); });
+</script>
+<script>
+function lvTable(tb, id, cols, opts) {
+  const d = dash.data(id);
+  tb.replaceChildren();
+  if (d.status !== 'ok') { const tr = tb.insertRow(); const td = tr.insertCell(); td.colSpan = cols.length; td.className = 'l'; td.textContent = d.status === 'error' ? 'Could not load this table.' : '—'; return; }
+  let rows = d.data.slice(); if (opts && opts.sort) rows.sort(opts.sort);
+  rows.forEach((r) => { const tr = tb.insertRow(); if (opts && opts.key) tr.dataset.key = r[opts.key];
+    cols.forEach((c) => { const td = tr.insertCell(); if (c.l) td.className = 'l'; if (c.w) td.classList.add('w');
+      const v = c.f ? r[c.f] : null; const txt = c.calc ? c.calc(r) : (c.fmt ? (v == null || v === '' ? '—' : c.fmt(+v)) : (v == null ? '' : String(v)));
+      if (c.pill) { const s = document.createElement('span'); s.className = 'lv-pill ' + c.pill(r, txt); s.textContent = txt; td.appendChild(s); } else td.textContent = txt;
+      if (c.cls) { const k = c.cls(r); if (k) td.classList.add(k); } }); });
+}
+const G = window.lvF;
+dash.draw('b-sales', (tb) => lvTable(tb, 'sales', [{f: 'channel', l: 1}, {f: 'type', l: 1}, {f: 'orders', fmt: G.N}, {f: 'net_lakh', fmt: G.L2}], {sort: (a, b) => a.type === b.type ? b.net_lakh - a.net_lakh : (a.type === 'Online' ? -1 : 1)}));
+dash.draw('b-alerts', (tb) => lvTable(tb, 'alerts', [{f: 'style', l: 1}, {f: 'name', l: 1, w: 1}, {f: 'status', l: 1, pill: (r) => r.status === 'Sold out' ? 'bad' : r.status === 'Low' ? 'warn' : 'ok'}, {f: 'online_atp', fmt: G.N}, {f: 'virtual', fmt: G.N}]));
+dash.draw('b-stockcat', (tb) => lvTable(tb, 'live_category', [{f: 'category', l: 1}, {f: 'online_atp', fmt: G.N}, {f: 'store_stock', fmt: G.N}], {sort: (a, b) => b.online_atp - a.online_atp}));
+dash.draw('b-stores', (tb) => lvTable(tb, 'stores', [{f: 'store', l: 1}, {f: 'pieces', fmt: G.N}, {f: 'mrp_cr', fmt: G.L2}], {sort: (a, b) => b.pieces - a.pieces}));
+dash.draw('b-track', (tb) => lvTable(tb, 'ads', [{f: 'platform', l: 1}, {f: 'campaigns_live', fmt: G.N}, {f: 'spend_today', fmt: (v) => G.L2(v / 1e5)}, {f: 'day_plan', fmt: (v) => G.L2(v / 1e5)}, {calc: (r) => r.day_plan ? G.P(r.spend_today / r.day_plan) : '—'}, {f: 'roas_today', fmt: G.X}, {f: 'spend_mtd', fmt: (v) => G.L2(v / 1e5)}, {f: 'roas_mtd', fmt: G.X}, {f: 'bfs_budget', fmt: (v) => G.L2(v / 1e5)}]));
+dash.draw('b-inv', (tb) => lvTable(tb, 'inv_vs_spend', [{f: 'category', l: 1}, {f: 'spend', fmt: G.L2}, {f: 'sales', fmt: G.L2}, {f: 'atp', fmt: G.N}, {f: 'signal', l: 1, pill: (r) => /through/.test(r.signal) ? 'warn' : /shift/.test(r.signal) ? 'ok' : ''}]));
+dash.draw('b-camp', (tb) => {
+  const a = dash.data('ads'); const be = a.status === 'ok' && a.data[0] ? +a.data[0].target_roas : null;
+  const act = (r) => { if (/Learning/.test(r.status)) return 'Learning'; if (r.roas == null || be == null) return '—'; if (r.roas >= be * 1.5) return 'Scale'; if (r.roas >= be) return 'Hold'; return r.spend >= 10000 ? 'Fix or cut' : 'Too early'; };
+  lvTable(tb, 'campaigns', [{f: 'platform', l: 1}, {f: 'campaign', l: 1, w: 1}, {f: 'focus', l: 1}, {f: 'spend', fmt: G.N}, {f: 'purchases', fmt: d3.format(',.1~f')}, {f: 'revenue', fmt: G.N}, {f: 'roas', fmt: G.X, cls: (r) => be == null || r.roas == null ? '' : r.roas >= be ? 'ok' : 'bad'}, {f: 'cpa', fmt: G.N}, {calc: act, l: 1, pill: (r, t) => t === 'Scale' ? 'ok' : t === 'Fix or cut' ? 'bad' : t === 'Hold' ? '' : 'warn'}], {sort: (x, y) => y.spend - x.spend, key: 'id'});
+});
+const lqVal = (id, field, fmt) => (el) => { const d = dash.data(id); const r = d.status === 'ok' && d.data ? d.data[0] : null; const v = r ? r[field] : null; el.textContent = v == null || v === '' ? '—' : fmt(+v); };
+const lqPill = (a) => /^Get it live|^Liquidate|^Scale/.test(a) ? 'ok' : /^Stop|^Virtual/.test(a) ? 'bad' : /^Will sell/.test(a) ? 'warn' : '';
+dash.draw('lq-asof', (el) => { const d = dash.data('liq_summary'); el.textContent = d.status === 'ok' && d.data[0] ? window.lvTime(d.data[0].as_of) : '—'; });
+dash.draw('lq-atp', lqVal('liq_summary', 'atp', G.N));
+dash.draw('lq-virt', lqVal('liq_summary', 'virtual', G.N));
+dash.draw('lq-left', lqVal('liq_summary', 'left_after_bfs', G.N));
+dash.draw('lq-pct', lqVal('liq_summary', 'pct_left', G.N));
+dash.draw('lq-nl', lqVal('liq_summary', 'not_live_units', G.N));
+dash.draw('lq-nls', lqVal('liq_summary', 'not_live_styles', G.N));
+dash.draw('lq-z', lqVal('liq_summary', 'zero_sale_units', G.N));
+dash.draw('lq-zs', lqVal('liq_summary', 'zero_sale_styles', G.N));
+dash.draw('b-lqcat', (tb) => lvTable(tb, 'liq_category', [{f: 'category', l: 1}, {f: 'atp', fmt: G.N}, {f: 'sold_today', fmt: G.N}, {f: 'left_after_bfs', fmt: G.N}, {f: 'pct_left', fmt: (v) => G.N(v) + '%'}, {f: 'zero_sale_units', fmt: G.N}, {f: 'not_live_units', fmt: G.N}], {sort: (a, b) => b.left_after_bfs - a.left_after_bfs}));
+dash.draw('b-lqact', (tb) => lvTable(tb, 'liq_actions', [{f: 'action', l: 1, pill: (r) => lqPill(r.action)}, {f: 'styles', fmt: G.N}, {f: 'atp', fmt: G.N}, {f: 'what', l: 1, w: 1}]));
+dash.draw('b-liq', (tb) => lvTable(tb, 'liquidation', [{f: 'action', l: 1, pill: (r) => lqPill(r.action)}, {f: 'style', l: 1}, {f: 'name', l: 1, w: 1}, {f: 'category', l: 1}, {f: 'web', l: 1, cls: (r) => /Not on|Draft|not published/.test(r.web) ? 'bad' : ''}, {f: 'atp', fmt: G.N}, {f: 'virtual', fmt: G.N}, {f: 'sold_today', fmt: G.N}, {f: 'days_cover', fmt: G.X}, {f: 'left_after_bfs', fmt: G.N}, {f: 'sizes_in_stock', fmt: G.N}], {sort: (a, b) => a.priority - b.priority || b.left_after_bfs - a.left_after_bfs || b.sold_today - a.sold_today, key: 'style'}));
+</script>
+<script>
+function lvTip(el) { let t = el.querySelector('.lv-tip'); if (!t) { t = document.createElement('div'); t.className = 'lv-tip'; t.hidden = true; el.appendChild(t); } return t; }
+dash.draw('c-trend', (el) => {
+  const h = dash.data('history'); el.replaceChildren();
+  if (h.status !== 'ok') { el.textContent = h.status === 'error' ? 'Could not load.' : '—'; return; }
+  const pts = h.data.map((r) => ({t: new Date(r.as_of), v: r.total_lakh == null ? null : +r.total_lakh})).filter((r) => r.v != null && !isNaN(r.t));
+  if (!pts.length) { el.textContent = 'No complete readings yet.'; return; }
+  const W = el.clientWidth || 360, H = 220, m = {t: 12, r: 16, b: 26, l: 40};
+  const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Total net sales at each reading today, ₹ lakh');
+  const x = d3.scaleTime(pts.length > 1 ? d3.extent(pts, (d) => d.t) : [new Date(+pts[0].t - 36e5), new Date(+pts[0].t + 36e5)], [m.l, W - m.r]);
+  const y = d3.scaleLinear([0, d3.max(pts, (d) => d.v) * 1.1], [H - m.b, m.t]).nice();
+  svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor(W / 90))).tickFormat((d) => d.toLocaleTimeString('en-IN', {timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit'})));
+  svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(4)).call((g) => g.select('.domain').remove());
+  svg.append('path').datum(pts).attr('fill', 'none').style('stroke', dash.colors[0]).attr('stroke-width', 2).attr('d', d3.line().x((d) => x(d.t)).y((d) => y(d.v)));
+  const tip = lvTip(el);
+  svg.selectAll('circle').data(pts).join('circle').attr('cx', (d) => x(d.t)).attr('cy', (d) => y(d.v)).attr('r', 4).style('fill', dash.colors[0])
+    .on('pointerenter', (e, d) => { tip.hidden = false; tip.textContent = window.lvTime(d.t) + ': ₹' + window.lvF.L2(d.v) + ' L'; tip.style.left = Math.min(x(d.t), W - 170) + 'px'; tip.style.top = Math.max(0, y(d.v) - 34) + 'px'; }).on('pointerleave', () => { tip.hidden = true; });
+});
+function lvBars(el, id, key, val, label) {
+  const c = dash.data(id); el.replaceChildren();
+  if (c.status !== 'ok') { el.textContent = c.status === 'error' ? 'Could not load.' : '—'; return; }
+  const rows = c.data.map((r) => ({k: r[key], v: +r[val] || 0, r})).sort((a, b) => b.v - a.v);
+  if (!rows.length) { el.textContent = 'Nothing yet.'; return; }
+  const W = el.clientWidth || 360, bh = 26;
+  const svg = d3.select(el).append('svg').attr('role', 'img').attr('aria-label', label);
+  const probe = svg.append('g'); rows.forEach((r) => probe.append('text').text(r.k));
+  const lw = (d3.max(probe.selectAll('text').nodes(), (n) => n.getComputedTextLength()) || 80) + 10; probe.remove();
+  const H = rows.length * bh + 8; svg.attr('viewBox', `0 0 ${W} ${H}`);
+  const x = d3.scaleLinear([0, d3.max(rows, (d) => d.v) || 1], [lw, W - 60]);
+  const y = d3.scaleBand(rows.map((d) => d.k), [4, H - 4]).padding(0.25);
+  svg.append('g').selectAll('text').data(rows).join('text').attr('x', lw - 8).attr('y', (d) => y(d.k) + y.bandwidth() / 2).attr('dy', '.35em').attr('text-anchor', 'end').text((d) => d.k);
+  svg.append('g').selectAll('rect').data(rows).join('rect').attr('x', lw).attr('y', (d) => y(d.k)).attr('height', y.bandwidth()).attr('width', (d) => Math.max(1, x(d.v) - lw)).attr('rx', 2).style('fill', dash.colors[0]);
+  svg.append('g').selectAll('text').data(rows).join('text').attr('x', (d) => x(d.v) + 6).attr('y', (d) => y(d.k) + y.bandwidth() / 2).attr('dy', '.35em').text((d) => window.lvF.L2(d.v));
+  return {svg, x, y, rows, lw, W};
+}
+dash.draw('c-cat', (el) => { lvBars(el, 'live_category', 'category', 'online_net_lakh', 'Online net sales today by category, ₹ lakh'); });
+dash.draw('c-focus', (el) => {
+  const c = dash.data('focus'); el.replaceChildren();
+  if (c.status !== 'ok') { el.textContent = c.status === 'error' ? 'Could not load.' : '—'; return; }
+  const rows = c.data; const W = el.clientWidth || 360, bh = 30;
+  const svg = d3.select(el).append('svg').attr('role', 'img').attr('aria-label', 'Ad spend and platform revenue by focus category, ₹ lakh');
+  const probe = svg.append('g'); rows.forEach((r) => probe.append('text').text(r.focus));
+  const lw = (d3.max(probe.selectAll('text').nodes(), (n) => n.getComputedTextLength()) || 80) + 10; probe.remove();
+  const H = rows.length * bh + 24; svg.attr('viewBox', `0 0 ${W} ${H}`);
+  const x = d3.scaleLinear([0, d3.max(rows, (d) => Math.max(d.spend, d.revenue)) || 1], [lw, W - 56]);
+  const y = d3.scaleBand(rows.map((d) => d.focus), [4, H - 20]).padding(0.2);
+  const y2 = d3.scaleBand(['spend', 'revenue'], [0, y.bandwidth()]).padding(0.1);
+  svg.append('g').selectAll('text').data(rows).join('text').attr('x', lw - 8).attr('y', (d) => y(d.focus) + y.bandwidth() / 2).attr('dy', '.35em').attr('text-anchor', 'end').text((d) => d.focus);
+  ['spend', 'revenue'].forEach((k, i) => {
+    svg.append('g').selectAll('rect').data(rows).join('rect').attr('x', lw).attr('y', (d) => y(d.focus) + y2(k)).attr('height', y2.bandwidth()).attr('width', (d) => Math.max(1, x(d[k]) - lw)).attr('rx', 2).style('fill', i ? dash.colors[1] : dash.colors[0]);
+    svg.append('g').selectAll('text').data(rows).join('text').attr('x', (d) => x(d[k]) + 4).attr('y', (d) => y(d.focus) + y2(k) + y2.bandwidth() / 2).attr('dy', '.35em').text((d) => window.lvF.L2(d[k]));
+  });
+  const lg = svg.append('g').attr('transform', `translate(${lw},${H - 6})`);
+  [['Spend', dash.colors[0]], ['Platform revenue', dash.colors[1]]].forEach(([t, c], i) => { lg.append('rect').attr('x', i * 110).attr('y', -9).attr('width', 10).attr('height', 10).style('fill', c); lg.append('text').attr('x', i * 110 + 14).attr('y', 0).text(t); });
+});
+</script>
+
+</div>
+</body>
+</html>
