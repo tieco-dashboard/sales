@@ -24,7 +24,7 @@
       start = '2026-11-27'; label = 'BFS 2026 (27 Nov – 6 Dec), ₹7 Cr plan';
       const lyh = ok('ly_hour'), lm = ok('ly_meta');
       const sd = Math.round((Date.parse(today) - Date.parse('2026-11-27')) / 864e5) + 1;
-      if (lyh && lm && lm[0]) { const day = lyh.filter((r) => +r.day === sd); const all = day.reduce((a, r) => a + (+r.ly_total || 0), 0); const upto = day.filter((r) => r.hour <= lm[0].last_hour).reduce((a, r) => a + (+r.ly_total || 0), 0); frac = all ? upto / all : hr / 24; } else frac = hr / 24;
+      if (lyh && lm && lm[0]) { const day = lyh.filter((r) => +r.day === sd); const all = day.reduce((a, r) => a + (+r.ly_total || 0), 0); const upto = day.filter((r) => r.hour <= lm[0].last_hour).reduce((a, r) => a + (+r.ly_total || 0), 0); frac = all ? upto / all : hr / 24; } else if (lm && lm[0] && lm[0].ly_frac != null) frac = +lm[0].ly_frac; else frac = hr / 24;
       const dates = [...new Set(T.filter((r) => r.period === 'bfs').map((r) => r.date))].sort();
       daysLeft = dates.filter((d) => d > today).length;
       T.filter((r) => r.period === 'bfs').forEach((r) => { const x = row(r.group, r.channel); x.target = (x.target || 0) + r.target_lakh; if (r.date < today) x.toDate = (x.toDate || 0) + r.target_lakh; else if (r.date === today) x.toDate = (x.toDate || 0) + r.target_lakh * frac; });
