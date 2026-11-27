@@ -97,6 +97,13 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
 .lv-sec[open]{display:flex;flex-direction:column;gap:var(--cds-gap-md);padding-bottom:var(--cds-pad-md)}
 .lv-sec .lv-card{border:0;border-top:1px solid var(--color-border-line);border-radius:0}
 .lv-sec>.lv-grid{padding:0 var(--cds-pad-md)}
+.ly-pair{display:grid;grid-template-columns:1fr 1fr;gap:var(--cds-gap-sm)}
+.ly-pair>div{display:flex;flex-direction:column;min-width:0}
+.ly-pair>div+div{border-left:1px solid var(--color-border-line);padding-left:var(--cds-gap-sm)}
+.ly-yr{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.lv-tile .v.ly-old{color:var(--color-fg-muted)}
+.ly-pair .v{font-size:var(--cds-font-size-heading)!important;white-space:nowrap}
+.ly-sw{display:inline-block;width:.75rem;height:.75rem;border-radius:2px;vertical-align:-1px;margin-right:.3rem}
 .lv-pill{display:inline-block;padding:0 .45rem;border-radius:999px;border:1px solid currentColor;line-height:1.5}
 </style>
 <div class="lv">
@@ -107,6 +114,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
   <p class="lv-take" id="takeaway">Today so far: net sales <b data-draw="tk-net" data-source="summary" data-field="total_lakh" data-row="0">—</b> lakh excl. GST, <b data-draw="tk-ly" data-source="vs_ly">—</b> of last year's BFS day 1 full-day total, with <b data-draw="tk-spend" data-source="ads_tot" data-field="spend_today" data-row="0">—</b> lakh of ad spend.</p>
   <nav class="lv-tabs" role="tablist" aria-label="Pages">
     <button class="lv-tab" role="tab" data-tab="today" aria-selected="true">Today (live)</button>
+    <button class="lv-tab" role="tab" data-tab="ly" aria-selected="false">BFS vs last year</button>
     <button class="lv-tab" role="tab" data-tab="mkt" aria-selected="false">Marketing</button>
   </nav>
 
@@ -133,6 +141,28 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
       <div class="lv-card" id="storestock"><h2>Store closing stock</h2>
         <div class="lv-tw"><table data-source="stores" data-row-key="store"><thead><tr><th class="l" data-field="store">Store</th><th data-field="pieces">Pieces</th><th data-field="mrp_cr">MRP ₹ Cr</th></tr></thead><tbody data-draw="b-stores"></tbody></table></div></div>
     </div>
+  </section>
+
+  <section class="lv-page" id="ly" data-page="ly" hidden>
+    <div class="lv-card" id="ly-head"><h2>BFS 2026 vs BFS 2025: website (Shopify)</h2>
+      <p class="lv-take" data-draw="ly-take" data-source="ly_hour ly_meta">—</p>
+      <div class="lv-tools"><select class="lv-in" data-p="ly_day" aria-label="Day"><option value="">BFS so far (like-for-like)</option><option value="1">Day 1 · 27 Nov</option><option value="2">Day 2 · 28 Nov</option><option value="3">Day 3 · 29 Nov</option><option value="4">Day 4 · 30 Nov</option><option value="5">Day 5 · 1 Dec</option><option value="6">Day 6 · 2 Dec</option><option value="7">Day 7 · 3 Dec</option><option value="8">Day 8 · 4 Dec</option><option value="9">Day 9 · 5 Dec</option><option value="10">Day 10 · 6 Dec</option><option value="11">Day 11 · 7 Dec</option></select>
+        <select class="lv-in" data-p="ly_hs" aria-label="From (IST)"><option value="">From 00:00</option><option value="0">00:00</option><option value="1">01:00</option><option value="2">02:00</option><option value="3">03:00</option><option value="4">04:00</option><option value="5">05:00</option><option value="6">06:00</option><option value="7">07:00</option><option value="8">08:00</option><option value="9">09:00</option><option value="10">10:00</option><option value="11">11:00</option><option value="12">12:00</option><option value="13">13:00</option><option value="14">14:00</option><option value="15">15:00</option><option value="16">16:00</option><option value="17">17:00</option><option value="18">18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option><option value="22">22:00</option><option value="23">23:00</option></select>
+        <select class="lv-in" data-p="ly_he" aria-label="To (IST)"><option value="">To 24:00</option><option value="1">01:00</option><option value="2">02:00</option><option value="3">03:00</option><option value="4">04:00</option><option value="5">05:00</option><option value="6">06:00</option><option value="7">07:00</option><option value="8">08:00</option><option value="9">09:00</option><option value="10">10:00</option><option value="11">11:00</option><option value="12">12:00</option><option value="13">13:00</option><option value="14">14:00</option><option value="15">15:00</option><option value="16">16:00</option><option value="17">17:00</option><option value="18">18:00</option><option value="19">19:00</option><option value="20">20:00</option><option value="21">21:00</option><option value="22">22:00</option><option value="23">23:00</option><option value="24">24:00</option></select>
+        <select class="lv-in" data-p="ly_metric" aria-label="Chart shows"><option value="">Chart: total sales</option><option value="orders">Chart: orders</option><option value="sessions">Chart: sessions</option><option value="conv">Chart: conversion</option><option value="aov">Chart: AOV</option><option value="disc_pct">Chart: discount %</option><option value="units">Chart: units</option></select></div>
+      <p class="lv-note" data-draw="ly-win" data-source="ly_hour ly_meta">—</p>
+      <p class="lv-note">Days line up by sale day: Day 1 is 27 Nov 2026 against 28 Nov 2025. "BFS so far" compares every completed hour this year with exactly the same sale days and hours last year; the hour filters apply when you pick a single day. Figures follow Shopify Analytics: total sales include GST and shipping, less returns; AOV = gross sales minus discounts ÷ orders. Updated with the hourly run, last at <span data-draw="ly-asof" data-source="ly_meta">—</span>.</p></div>
+    <div class="lv-tiles" data-draw="ly-tiles" data-set="sales" data-source="ly_hour ly_meta"></div>
+    <div class="lv-card"><h2>By day for the whole sale, or by hour when you pick a day</h2><div class="lv-chart" data-draw="ly-chart" data-source="ly_hour ly_meta"></div>
+      <p class="lv-note"><span class="ly-sw" style="background:#9a9890"></span>BFS 2025 &nbsp; <span class="ly-sw ly-sw-ty"></span>BFS 2026</p></div>
+    <details class="lv-sec"><summary><span class="t">Traffic, conversion and international</span><span class="d">Sessions, conversion rate, domestic vs international</span></summary>
+      <div class="lv-tiles" style="padding:0 var(--cds-pad-md)" data-draw="ly-tiles" data-set="traffic" data-source="ly_hour ly_meta"></div></details>
+    <details class="lv-sec"><summary><span class="t">COD vs prepaid, cancellations and RTO</span><span class="d">Order counts for BFS so far: <span data-draw="ly-pwin" data-source="ly_split">—</span></span></summary>
+      <p class="lv-note" style="padding:0 var(--cds-pad-lg)">COD = orders GoKwik tags COD (not paid at checkout). Store credit orders are counted separately. Cancelled before shipping = cancelled and never fulfilled. RTO = shipped, then cancelled; this year's RTOs only appear once orders are out for delivery, so compare rates over the next 2–3 weeks. Returns: BFS products are tagged no exchange, no return, so returns are tracked as they actually happen, not projected.</p>
+      <div class="lv-tiles" style="padding:0 var(--cds-pad-md)" data-draw="ly-tiles" data-set="pay" data-source="ly_split"></div></details>
+    <details class="lv-sec"><summary><span class="t">Clothing stock and top products</span><span class="d">Shopify clothing stock units, and the top 10 products by units each year</span></summary>
+      <div class="lv-tiles" style="padding:0 var(--cds-pad-md)" data-draw="ly-tiles" data-set="inv" data-source="ly_inv"></div>
+      <div class="lv-grid"><div class="lv-card"><h2>BFS 2026</h2><div class="lv-tw"><table><thead><tr><th>#</th><th class="l">Product</th><th>Units</th><th>Orders</th><th>Gross sales</th></tr></thead><tbody data-draw="ly-top" data-source="ly_top" data-y="2026"></tbody></table></div></div><div class="lv-card"><h2>BFS 2025</h2><div class="lv-tw"><table><thead><tr><th>#</th><th class="l">Product</th><th>Units</th><th>Orders</th><th>Gross sales</th></tr></thead><tbody data-draw="ly-top" data-source="ly_top" data-y="2025"></tbody></table></div></div></div></details>
   </section>
 
   <section class="lv-page" id="mkt" data-page="mkt" hidden>
@@ -226,6 +256,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
   </section>
 </div>
 <script src="spend.js?v=6b40a76b"></script>
+<script src="ly.js?v=16fe2a71"></script>
 <script>
 window.lvF = {L2: d3.format(',.2f'), N: d3.format(',.0f'), P: d3.format('.0%'), P1: d3.format('.1%'), X: d3.format('.1f')};
 window.lvTime = (s) => { const d = new Date(s); return isNaN(d) ? '—' : d.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}); };
