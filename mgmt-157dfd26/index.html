@@ -117,6 +117,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
     <button class="lv-tab" role="tab" data-tab="ly" aria-selected="false">BFS vs last year</button>
     <button class="lv-tab" role="tab" data-tab="gp" aria-selected="false">Management GP</button>
     <button class="lv-tab" role="tab" data-tab="mkt" aria-selected="false">Marketing</button>
+    <a href="../#sales" target="_top" style="padding:var(--cds-pad-sm) var(--cds-pad-md);color:var(--color-fg-muted);text-decoration:none;margin-left:auto">Sales &amp; inventory (FY) ↗</a>
   </nav>
 
   <section class="lv-page" id="today" data-page="today">
@@ -128,6 +129,9 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
       <div class="lv-tile"><span class="k">Online stock, ATP (pcs)</span><span class="v" data-draw="t-atp" data-source="summary" data-field="online_atp" data-row="0">—</span><span class="s">Good + Virtual, clothing</span></div>
       <div class="lv-tile"><span class="k">Store stock (pcs)</span><span class="v" data-draw="t-ss" data-source="summary" data-field="store_stock" data-row="0">—</span><span class="s">₹<span data-draw="t-ssm" data-source="summary" data-field="store_stock_mrp_cr" data-row="0">—</span> Cr at MRP</span></div>
     </div>
+    <div class="lv-card" id="targets"><h2>Target vs achievement by channel and store</h2>
+      <p class="lv-note" data-draw="tg-note" data-source="chan_target chan_daily sales summary ly_hour ly_meta">—</p>
+      <div class="lv-tw"><table><thead><tr><th class="l">Channel / store</th><th>Full target</th><th>Target to date</th><th>Achieved</th><th>% of target to date</th><th>% of full target</th><th>Needed per day</th></tr></thead><tbody data-draw="tg-body" data-source="chan_target chan_daily sales summary ly_hour ly_meta"></tbody></table></div></div>
     <div class="lv-grid">
       <div class="lv-card" id="trend"><h2>Net sales through the day (₹ lakh)</h2><div class="lv-chart" data-draw="c-trend" data-source="history"></div></div>
       <div class="lv-card" id="cat"><h2>Online net sales by category today (₹ lakh)</h2><div class="lv-chart" data-draw="c-cat" data-source="live_category"></div></div>
@@ -277,6 +281,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
 </div>
 <script src="spend.js?v=6b40a76b"></script>
 <script src="ly.js?v=16fe2a71"></script>
+<script src="tg.js?v=2c8f54dd"></script>
 <script>
 window.lvF = {L2: d3.format(',.2f'), N: d3.format(',.0f'), P: d3.format('.0%'), P1: d3.format('.1%'), X: d3.format('.1f')};
 window.lvTime = (s) => { const d = new Date(s); return isNaN(d) ? '—' : d.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}); };
