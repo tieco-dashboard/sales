@@ -126,7 +126,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
 
   <section class="lv-page" id="mkt" data-page="mkt" hidden>
     <div class="lv-card" id="roas-check"><h2>ROAS now vs the BFS plan</h2>
-      <p class="lv-note">Targets are from the BFS 2026 Meta Ads Plan for today. The plan's minimum (7× peak, 6× sustain, 5× closing) is on website revenue: Shopify net sales excl. GST ÷ Meta spend. In Ads Manager terms that minimum is about 0.59 of it (× 1.172 GST × 50% Meta share). Green = on plan, amber = below plan but above the minimum, red = below the minimum. Plan rules: below the minimum for 2 hours after 2 pm → cut Meta budget 20%; 15%+ above plan → release the ₹2.1 L reserve to the best ad sets.</p>
+      <p class="lv-note">Targets are from the BFS 2026 Meta Ads Plan for today. The plan's minimum (7× peak, 6× sustain, 5× closing) is on website revenue: Shopify net sales excl. GST ÷ Meta spend. Ads Manager targets and minimums are converted with today's live ratio of Meta revenue in Ads Manager to Shopify net sales (shown on the Meta tile; about 0.88 on day 1). The plan assumed 0.59 (× 1.172 GST × 50% Meta share), which set the Ads Manager bar too low. Green = on plan, amber = below plan but above the minimum, red = below the minimum. Plan rules: below the minimum for 2 hours after 2 pm → cut Meta budget 20%; 15%+ above plan → release the ₹2.1 L reserve to the best ad sets.</p>
       <div class="lv-tiles">
         <div class="lv-tile"><span class="k">Meta ROAS in Ads Manager · <span data-draw="rn-meta-t" data-source="roas_now">—</span></span><span class="v" data-draw="rn-meta" data-source="roas_now">—</span><span class="s" data-draw="rn-meta-s" data-source="roas_now">—</span></div>
         <div class="lv-tile"><span class="k">Website ROAS on Meta spend · <span data-draw="rn-webmeta-t" data-source="roas_now">—</span></span><span class="v" data-draw="rn-webmeta" data-source="roas_now">—</span><span class="s" data-draw="rn-webmeta-s" data-source="roas_now">—</span></div>
@@ -212,7 +212,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
       <div class="lv-tw" style="max-height:40rem"><table data-source="campaigns" data-row-key="id"><thead><tr><th class="l" data-field="platform">Platform</th><th class="l" data-field="campaign">Campaign</th><th class="l" data-field="focus">Focus</th><th data-field="spend">Spend ₹</th><th data-field="purchases">Purchases</th><th data-field="revenue">Revenue ₹</th><th data-field="roas">ROAS</th><th data-field="cpa">Cost / purchase ₹</th><th class="l">Do</th></tr></thead><tbody data-draw="b-camp"></tbody></table></div></div>
   </section>
 </div>
-<script src="spend.js?v=fb8dae6f"></script>
+<script src="spend.js?v=69b4a809"></script>
 <script>
 window.lvF = {L2: d3.format(',.2f'), N: d3.format(',.0f'), P: d3.format('.0%'), P1: d3.format('.1%'), X: d3.format('.1f')};
 window.lvTime = (s) => { const d = new Date(s); return isNaN(d) ? '—' : d.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}); };

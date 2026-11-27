@@ -58,17 +58,17 @@ dash.calc('cat_pace', {inputs: ['campaigns', 'cat_plan', 'spend_tot'], title: 'M
   ['Stores', 'Unassigned'].forEach((k) => { if (acc[k]) rows.push({category: k === 'Stores' ? 'Store campaigns (not in plan)' : 'Unassigned', plan_share: 0, plan_today: 0, spend_today: Math.round(acc[k].s), gap: Math.round(acc[k].s), roas: acc[k].s ? acc[k].v / acc[k].s : null}); });
   return rows;
 }});
-dash.calc('ad_moves', {inputs: ['campaigns', 'ads', 'spend_daily'], title: 'Budget moves on live Meta campaigns', description: "Meta campaigns with 2K+ spend today, judged on Ads Manager ROAS against the BFS plan for the day: plan target = the day's Ads Manager ROAS target; minimum = the phase minimum (7 peak, 6 sustain, 5 closing, on Shopify revenue) x 1.172 GST x 50% Meta share, as in the plan. 15%+ above target: scale +30% (plan: release reserve). Between minimum and target: hold. Below minimum with 10K+ spent: cut 20% (plan rule), pause if under 60% of the minimum. Today's spend stands in for the daily budget.", fn: (campaigns, ads, daily) => {
+dash.calc('ad_moves', {inputs: ['campaigns', 'ads', 'spend_daily', 'sales'], title: 'Budget moves on live Meta campaigns', description: "Meta campaigns with 2K+ spend today, judged on Ads Manager ROAS against the BFS plan for the day: target = the day's website ROAS target and minimum = the phase minimum (7 peak, 6 sustain, 5 closing, on Shopify revenue), both converted to Ads Manager terms with today's live ratio of Meta revenue in Ads Manager to Shopify net sales. 15%+ above target: scale +30% (plan: release reserve). Between minimum and target: hold. Below minimum with 10K+ spent: cut 20% (plan rule), pause if under half the minimum. Today's spend stands in for the daily budget.", fn: (campaigns, ads, daily, sales) => {
   const m = ads.find((r) => r.platform === 'Meta') || {}; const p = spPlanDay(daily, m.as_of);
-  const tg = +p.meta_am_target || 8.6 * SP_AM, mn = p.roas_floor ? +p.roas_floor * SP_AM : tg * 0.5;
+  const k = spK(ads, sales); const tg = p.web_meta_target ? +p.web_meta_target * k : (+p.meta_am_target || 5), mn = p.roas_floor ? +p.roas_floor * k : tg * 0.5;
   return campaigns.filter((r) => r.platform === 'Meta' && r.id !== 'M|Other' && (+r.spend || 0) >= 2000 && r.status !== 'Preparing').map((r) => {
     const s = +r.spend, x = +r.roas || 0; let move = 'Hold: on plan', ch = 0;
     if (x >= tg * 1.15) { move = 'Scale +30%'; ch = Math.round(s * 0.3); }
     else if (x >= tg) move = 'Hold: on plan';
     else if (x >= mn) move = 'Hold: above minimum';
-    else if (s >= 10000) { if (x < mn * 0.6) { move = 'Pause'; ch = -Math.round(s); } else { move = 'Cut 20%'; ch = -Math.round(s * 0.2); } }
+    else if (s >= 10000) { if (x < mn * 0.5) { move = 'Pause'; ch = -Math.round(s); } else { move = 'Cut 20%'; ch = -Math.round(s * 0.2); } }
     else move = 'Watch (low spend)';
-    return {id: r.id, campaign: r.campaign, focus: r.focus, spend: s, roas: x, move, change: ch, floor: Math.round(mn * 10) / 10, target: tg};
+    return {id: r.id, campaign: r.campaign, focus: r.focus, spend: s, roas: x, move, change: ch, floor: Math.round(mn * 10) / 10, target: Math.round(tg * 10) / 10};
   });
 }});
 dash.calc('moves_tot', {inputs: ['ad_moves'], title: 'Budget moves totals', description: 'Budget freed by pausing or cutting, budget added to scaling campaigns, and what is left for new product ad sets (per day).', fn: (moves) => {
@@ -156,17 +156,18 @@ dash.draw('c-spend-intra', (el) => {
     .on('pointerenter', (e, p) => { tip.hidden = false; tip.textContent = Math.floor(p.h) + ':' + String(Math.round((p.h % 1) * 60)).padStart(2, '0') + ' — ₹' + spG.L2(p.v) + ' L spent'; tip.style.left = Math.min(x(p.h), W - 170) + 'px'; tip.style.top = Math.max(0, y(p.v) - 34) + 'px'; }).on('pointerleave', () => { tip.hidden = true; });
 });
 const SP_AM = 1.172 * 0.5; // plan: Ads Manager value = website net x GST 1.172 x Meta share 50%
+function spK(ads, sales) { const m = (ads || []).find((r) => r.platform === 'Meta') || {}; const w = ((sales || []).find((r) => r.channel === 'Shopify') || {}).net_lakh; const k = +w > 5 && +m.revenue_today > 0 ? +m.revenue_today / (+w * 1e5) : null; return k && k > 0.2 && k < 2 ? k : SP_AM; }
 function spPlanDay(daily, asOf) { const day = asOf ? String(asOf).slice(0, 10) : null; return daily.find((r) => r.date === day) || {}; }
-dash.calc('roas_now', {inputs: ['ads', 'spend_daily', 'sales'], title: 'ROAS today vs the BFS plan', description: "From the BFS 2026 Meta Ads Plan (Daywise Plan): Meta ROAS in Ads Manager vs the day's Ads Manager target, and minimum = the phase minimum x 1.172 (GST) x 50% (Meta share), as in the plan. Website ROAS = Shopify net sales excl. GST ÷ Meta spend (the basis of the plan's minimum: 7 peak, 6 sustain, 5 closing) and ÷ Meta + Google spend. Website revenue vs the day's revenue target. Google runs a fixed ₹50K a day with no ROAS target in the plan.", fn: (ads, daily, sales) => {
+dash.calc('roas_now', {inputs: ['ads', 'spend_daily', 'sales'], title: 'ROAS today vs the BFS plan', description: "From the BFS 2026 Meta Ads Plan (Daywise Plan): Meta ROAS in Ads Manager vs the day's website ROAS target and phase minimum converted to Ads Manager terms with today's live ratio of Meta revenue in Ads Manager to Shopify net sales (the plan's assumed 0.586 = 1.172 GST x 50% Meta share is used until Shopify net passes ₹5 L). Website ROAS = Shopify net sales excl. GST ÷ Meta spend (the basis of the plan's minimum: 7 peak, 6 sustain, 5 closing) and ÷ Meta + Google spend. Website revenue vs the day's revenue target. Google runs a fixed ₹50K a day with no ROAS target in the plan.", fn: (ads, daily, sales) => {
   const meta = ads.find((r) => r.platform === 'Meta') || {}, g = ads.find((r) => r.platform === 'Google') || {};
   const p = spPlanDay(daily, meta.as_of || g.as_of);
   const web = (sales.find((r) => r.channel === 'Shopify') || {}).net_lakh; const W = web == null ? null : +web * 1e5;
   const ms = +meta.spend_today || 0, gs = +g.spend_today || 0;
   const st = (x, t, mn) => x == null || !t ? '—' : x >= t * 1.15 ? 'Beating plan by 15%+: release reserve' : x >= t ? 'On plan' : mn != null && x >= mn ? 'Above minimum, below plan' : mn != null ? 'Below minimum: cut Meta 20%' : 'Below plan';
   const row = (k, label, x, t, mn, extra) => ({id: k, label, roas: x, target: t || null, minimum: mn || null, pct: x != null && t ? x / t : null, status: st(x, t, mn), ...extra});
-  const amMin = p.roas_floor ? +p.roas_floor * SP_AM : null;
+  const k = spK(ads, sales); const amMin = p.roas_floor ? +p.roas_floor * k : null; const amTg = p.web_meta_target ? +p.web_meta_target * k : +p.meta_am_target;
   const out = [
-    row('meta', 'Meta ROAS in Ads Manager', ms ? +meta.revenue_today / ms : null, +p.meta_am_target, amMin, {mtd: +meta.roas_mtd || null, breakeven: meta.breakeven_roas == null ? null : +meta.breakeven_roas}),
+    row('meta', 'Meta ROAS in Ads Manager', ms ? +meta.revenue_today / ms : null, amTg, amMin, {mtd: +meta.roas_mtd || null, breakeven: meta.breakeven_roas == null ? null : +meta.breakeven_roas, note: (k === SP_AM ? 'plan ratio ' : 'live ratio ') + k.toFixed(2) + ' (Ads Manager ÷ Shopify)'}),
     row('webmeta', 'Website ROAS on Meta spend', W != null && ms ? W / ms : null, +p.web_meta_target, +p.roas_floor, {}),
     row('webtotal', 'Website ROAS on all ad spend', W != null && ms + gs ? W / (ms + gs) : null, +p.total_roas_target, null, {}),
     row('google', 'Google ROAS', gs ? +g.revenue_today / gs : null, null, null, {mtd: +g.roas_mtd || null, status: 'Fixed ₹50K a day, search and shopping'}),
@@ -181,6 +182,6 @@ function spRc(r) { const m = spRoasRow('meta'); return !m || !m.minimum || r.roa
   const isRev = k === 'rev';
   dash.draw('rn-' + k, (el) => { const r = spRoasRow(k); el.classList.remove('ok', 'bad', 'warn'); if (!r || r.roas == null) { el.textContent = '—'; return; } el.textContent = isRev ? '₹' + spG.L2(r.roas) + ' L' : spG.X(r.roas) + '×'; if (r.target) el.classList.add(r.roas >= r.target ? 'ok' : r.minimum == null || r.roas >= r.minimum ? 'warn' : 'bad'); });
   dash.draw('rn-' + k + '-t', (el) => { const r = spRoasRow(k); el.textContent = !r || !r.target ? (k === 'google' ? 'no target (fixed ₹50K/day)' : '—') : 'plan ' + (isRev ? '₹' + spG.L2(r.target) + ' L' : spG.X(r.target) + '×') + (r.minimum ? ' · min ' + spG.X(r.minimum) + '×' : ''); });
-  dash.draw('rn-' + k + '-s', (el) => { const r = spRoasRow(k); if (!r) { el.textContent = '—'; return; } el.textContent = [r.pct != null ? spG.P(r.pct) + ' of plan' : '', r.status, r.mtd ? 'MTD ' + spG.X(r.mtd) + '×' : '', r.breakeven ? 'break-even ' + spG.X(r.breakeven) + '×' : ''].filter(Boolean).join(' · '); });
+  dash.draw('rn-' + k + '-s', (el) => { const r = spRoasRow(k); if (!r) { el.textContent = '—'; return; } el.textContent = [r.pct != null ? spG.P(r.pct) + ' of plan' : '', r.status, r.mtd ? 'MTD ' + spG.X(r.mtd) + '×' : '', r.note || '', r.breakeven ? 'break-even ' + spG.X(r.breakeven) + '×' : ''].filter(Boolean).join(' · '); });
 });
 dash.draw('rn-focus', (el) => { const r = spRoasRow('focus'); el.textContent = r && r.status ? r.status : '—'; });
