@@ -54,7 +54,7 @@
   };
   dash.draw('tg-note', (el) => {
     const c = window.tgCalc(); if (!c) { el.textContent = '—'; return; }
-    el.textContent = c.label + '. ₹ lakh, net sales excl. GST (online by order date, stores by bill date). Target to date = finished days in full plus ' + (c.bfs ? Math.round(c.frac * 100) + '% of today\'s target (the share of last year\'s same sale day that had come in by this hour)' : 'the share of the month gone') + '. Needed per day = what is left of the full target ÷ ' + c.daysLeft + ' day' + (c.daysLeft === 1 ? '' : 's') + ' after today.' + (c.bfs ? ' Marketplaces have one combined BFS target.' : '');
+    el.textContent = c.label + '. ₹ lakh, net sales excl. GST (online by order date, stores by bill date). Target to date = finished days in full plus ' + (c.bfs ? Math.round(c.frac * 100) + '% of today\'s target (the share of last year\'s same sale day that had come in by this hour)' : 'the share of the month gone') + '. Needed per day = what is left of the full target ÷ ' + c.daysLeft + ' day' + (c.daysLeft === 1 ? '' : 's') + ' after today.' + (c.bfs ? ' Marketplace targets split the ₹20 L by each marketplace\'s share of Sep–Oct 2026 sales.' : '');
   });
   dash.draw('tg-body', (tb) => {
     const c = window.tgCalc(); tb.replaceChildren();
