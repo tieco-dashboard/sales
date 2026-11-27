@@ -87,13 +87,13 @@ dash.draw('sp-left', spV('budget_left', spG.L2));
 dash.draw('sp-days', spV('days_left', spG.N));
 dash.draw('sp-rplan', spV('remaining_plan', spG.L2));
 dash.draw('b-spendday', (tb) => spTable(tb, 'spend_daily', [{f: 'date', l: 1, calc: (r) => new Date(r.date + 'T00:00:00').toLocaleDateString('en-IN', {day: 'numeric', month: 'short'})}, {f: 'day', l: 1}, {f: 'phase', l: 1}, {f: 'meta_plan', fmt: spG.N}, {f: 'meta_actual', fmt: spG.N}, {calc: (r) => r.meta_actual == null || !r.meta_plan ? '—' : spG.P(r.meta_actual / r.meta_plan), cls: (r) => r.meta_actual == null || r.status === 'today' ? '' : r.meta_actual > r.meta_plan * 1.1 ? 'warn' : ''}, {f: 'meta_value', fmt: spG.N}, {f: 'roas_floor', fmt: spG.X}, {f: 'google_plan', fmt: spG.N}, {f: 'google_actual', fmt: spG.N}], {sort: (a, b) => (a.date < b.date ? -1 : 1), key: 'date'}));
-dash.draw('b-catpace', (tb) => spTable(tb, 'cat_pace', [{f: 'category', l: 1}, {f: 'plan_share', fmt: spG.P}, {f: 'plan_today', fmt: spG.N}, {f: 'spend_today', fmt: spG.N}, {f: 'gap', fmt: (v) => (v > 0 ? '+' : '') + spG.N(v), cls: (r) => r.plan_share && r.gap < -0.3 * r.plan_today ? 'warn' : ''}, {f: 'roas', fmt: spG.X}]));
+dash.draw('b-catpace', (tb) => spTable(tb, 'cat_pace', [{f: 'category', l: 1}, {f: 'plan_share', fmt: spG.P}, {f: 'plan_today', fmt: spG.N}, {f: 'spend_today', fmt: spG.N}, {f: 'gap', fmt: (v) => (v > 0 ? '+' : '') + spG.N(v), cls: (r) => r.plan_share && r.gap < -0.3 * r.plan_today ? 'warn' : ''}, {f: 'roas', fmt: spG.X, cls: spRc}, {calc: () => spTg()}]));
 dash.draw('nx-rel', mvV('released', (v) => '₹' + spG.N(v)));
 dash.draw('nx-reln', mvV('cut_count', spG.N));
 dash.draw('nx-add', mvV('added', (v) => '₹' + spG.N(v)));
 dash.draw('nx-addn', mvV('scale_count', spG.N));
 dash.draw('nx-new', mvV('for_new', (v) => '₹' + spG.N(v)));
-dash.draw('b-moves', (tb) => spTable(tb, 'ad_moves', [{f: 'campaign', l: 1, w: 1}, {f: 'focus', l: 1}, {f: 'spend', fmt: spG.N}, {f: 'roas', fmt: spG.X}, {f: 'move', l: 1, pill: (r) => /^Scale/.test(r.move) ? 'ok' : /^Pause|^Cut/.test(r.move) ? 'bad' : /^Watch/.test(r.move) ? 'warn' : ''}, {f: 'change', fmt: (v) => (v > 0 ? '+' : '') + spG.N(v)}], {sort: (a, b) => Math.abs(b.change) - Math.abs(a.change) || b.spend - a.spend, key: 'id'}));
+dash.draw('b-moves', (tb) => spTable(tb, 'ad_moves', [{f: 'campaign', l: 1, w: 1}, {f: 'focus', l: 1}, {f: 'spend', fmt: spG.N}, {f: 'roas', fmt: spG.X, cls: (r) => r.roas >= r.floor ? 'ok' : 'bad'}, {f: 'floor', fmt: spG.X}, {f: 'move', l: 1, pill: (r) => /^Scale/.test(r.move) ? 'ok' : /^Pause|^Cut/.test(r.move) ? 'bad' : /^Watch/.test(r.move) ? 'warn' : ''}, {f: 'change', fmt: (v) => (v > 0 ? '+' : '') + spG.N(v)}], {sort: (a, b) => Math.abs(b.change) - Math.abs(a.change) || b.spend - a.spend, key: 'id'}));
 dash.draw('b-nextads', (tb) => spTable(tb, 'next_ads', [{f: 'priority', fmt: spG.N}, {f: 'play', l: 1, pill: (r) => r.priority === 1 ? 'ok' : r.priority === 4 ? 'warn' : ''}, {f: 'category', l: 1}, {f: 'styles', l: 1, w: 1}, {f: 'stock', fmt: spG.N}, {f: 'budget', fmt: (v) => v ? spG.N(v) : '—'}, {f: 'what_to_run', l: 1, w: 1}], {key: 'id'}));
 dash.draw('b-adsout', (tb) => spTable(tb, 'ads_out', [{f: 'style', l: 1}, {f: 'name', l: 1, w: 1}, {f: 'reason', l: 1, pill: (r) => /Sold out/.test(r.reason) ? 'bad' : 'warn'}, {f: 'sold_today', fmt: spG.N}, {f: 'atp', fmt: spG.N}], {key: 'style'}));
 dash.draw('c-spend-daily', (el) => {
@@ -134,4 +134,23 @@ dash.draw('c-spend-intra', (el) => {
   const tip = spTip(el);
   svg.selectAll('circle').data(pts).join('circle').attr('cx', (p) => x(p.h)).attr('cy', (p) => y(p.v)).attr('r', 4).style('fill', dash.colors[1])
     .on('pointerenter', (e, p) => { tip.hidden = false; tip.textContent = Math.floor(p.h) + ':' + String(Math.round((p.h % 1) * 60)).padStart(2, '0') + ' — ₹' + spG.L2(p.v) + ' L spent'; tip.style.left = Math.min(x(p.h), W - 170) + 'px'; tip.style.top = Math.max(0, y(p.v) - 34) + 'px'; }).on('pointerleave', () => { tip.hidden = true; });
+});
+dash.calc('roas_now', {inputs: ['ads', 'spend_daily'], title: 'ROAS today vs target', description: "Platform-reported ROAS today (revenue ÷ spend, incl. GST, before returns) per platform and blended, against the target: the ads file's target_roas, else the BFS media plan ROAS floor for today's phase (27–30 Nov 7×, 1–4 Dec 6×, 5–6 Dec 5×). Scale zone = 1.5× the target or better.", fn: (ads, daily) => {
+  const asOf = (ads.find((r) => r.as_of) || {}).as_of; const day = asOf ? String(asOf).slice(0, 10) : null;
+  const floor = +((daily.find((r) => r.date === day) || {}).roas_floor) || null;
+  const st = (x, t) => x == null || !t ? '—' : x >= t * 1.5 ? 'Scale zone' : x >= t ? 'Above target' : x >= t * 0.8 ? 'Just below target' : 'Below target';
+  const rows = ads.map((r) => { const t = +r.target_roas || floor; const x = +r.spend_today ? +r.revenue_today / +r.spend_today : null; return {platform: r.platform, roas: x, target: t, pct: x != null && t ? x / t : null, status: st(x, t), roas_mtd: +r.roas_mtd || null, spend: +r.spend_today || 0, breakeven: r.breakeven_roas == null ? null : +r.breakeven_roas}; });
+  const S = d3.sum(ads, (r) => +r.spend_today || 0), R = d3.sum(ads, (r) => +r.revenue_today || 0);
+  const m = rows.find((r) => r.platform === 'Meta') || {}; const t = m.target || floor; const x = S ? R / S : null;
+  rows.push({platform: 'Blended', roas: x, target: t, pct: x != null && t ? x / t : null, status: st(x, t), roas_mtd: null, spend: S, breakeven: m.breakeven == null ? null : m.breakeven});
+  return rows;
+}});
+function spRoasRow(p) { const d = dash.data('roas_now'); return d.status === 'ok' && d.data ? d.data.find((r) => r.platform === p) : null; }
+function spTg() { const r = spRoasRow('Meta'); return r && r.target ? spG.X(r.target) : '—'; }
+function spRc(r) { const m = spRoasRow('Meta'); return !m || !m.target || r.roas == null ? '' : r.roas >= m.target ? 'ok' : 'bad'; }
+['Meta', 'Google', 'Blended'].forEach((p) => {
+  const k = p.toLowerCase();
+  dash.draw('rn-' + k, (el) => { const r = spRoasRow(p); el.classList.remove('ok', 'bad', 'warn'); if (!r || r.roas == null) { el.textContent = '—'; return; } el.textContent = spG.X(r.roas) + '×'; el.classList.add(r.roas >= (r.target || 0) ? 'ok' : r.roas >= (r.target || 0) * 0.8 ? 'warn' : 'bad'); });
+  dash.draw('rn-' + k + '-t', (el) => { const r = spRoasRow(p); el.textContent = r && r.target ? spG.X(r.target) + '×' : '—'; });
+  dash.draw('rn-' + k + '-s', (el) => { const r = spRoasRow(p); if (!r) { el.textContent = '—'; return; } el.textContent = (r.pct != null ? spG.P(r.pct) + ' of target · ' : '') + r.status + (r.roas_mtd ? ' · MTD ' + spG.X(r.roas_mtd) + '×' : '') + (r.breakeven ? ' · break-even ' + spG.X(r.breakeven) + '×' : ''); });
 });
