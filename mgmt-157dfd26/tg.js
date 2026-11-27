@@ -76,6 +76,33 @@
       cell(N2(r.target)); cell(PC(r.pctFull)); cell(N2(r.need));
     });
   });
+  // Headline banner (Zuber, 28 Nov): the running BFS total since 27 Nov up to this refresh, plus each sale day.
+  dash.draw('tg-banner', (el) => {
+    const c = window.tgCalc(); el.replaceChildren(); if (!c) { el.textContent = '—'; return; }
+    const T = ok('chan_target') || [], D = (ok('chan_daily') || []).filter((r) => r.date && r.date < c.today && r.date >= c.start);
+    const tot = c.rows.find((r) => r.kind === 'total');
+    const fmtD = (d) => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', {day: 'numeric', month: 'short'});
+    const tm = (() => { const d = new Date(c.asOf); return isNaN(d) ? c.asOf : d.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}); })();
+    const L = (v) => '₹' + N2(v) + ' L';
+    const h = document.createElement('div'); h.className = 'tg-bn-h';
+    const k = document.createElement('div'); k.className = 'tg-bn-k'; k.textContent = (c.bfs ? 'BFS sales so far · 27 Nov 12:00 AM → ' : 'Month to date · ' + fmtD(c.start) + ' → ') + tm + ' (this refresh)';
+    const v = document.createElement('div'); v.className = 'tg-bn-v'; v.textContent = L(tot.ach);
+    const s = document.createElement('div'); s.className = 'tg-bn-s'; s.textContent = PC(tot.pctToDate) + ' of the target till now (' + L(tot.toDate) + ') · ' + PC(tot.pctFull) + ' of the full ' + (c.bfs ? 'BFS' : 'month') + ' target (' + L(tot.target) + ')';
+    h.append(k, v, s); el.appendChild(h);
+    if (!c.bfs) return;
+    const days = [...new Set(T.filter((r) => r.period === 'bfs').map((r) => r.date))].sort().filter((d) => d <= c.today);
+    const byD = {}; D.forEach((r) => { byD[r.date] = (byD[r.date] || 0) + (+r.net_lakh || 0); });
+    const tgt = (d) => T.filter((r) => r.period === 'bfs' && r.date === d).reduce((a, r) => a + r.target_lakh, 0);
+    const tb = document.createElement('table'); tb.className = 'tg-bn-t';
+    const hr = tb.insertRow(); ['Sale day', 'Date', 'Net sales', 'Day target', '% of day', 'Running BFS total'].forEach((x, i) => { const th = document.createElement('th'); th.textContent = x; if (i < 2) th.className = 'l'; hr.appendChild(th); });
+    let run = 0;
+    days.forEach((d, i) => {
+      const isT = d === c.today; const val = isT ? tot.todayAch : (byD[d] || 0); run += val; const dt = tgt(d); const p = dt ? val / dt : null;
+      const r = tb.insertRow(); if (isT) r.className = 'now';
+      [['Day ' + (i + 1), 'l'], [fmtD(d) + (isT ? ' (till ' + tm.split(', ').pop() + ')' : ''), 'l'], [L(val)], [L(dt)], [PC(p), cls(p)], [L(run)]].forEach(([x, k2]) => { const td = r.insertCell(); td.textContent = x; if (k2) td.classList.add(...k2.split(' ').filter(Boolean)); });
+    });
+    const w = document.createElement('div'); w.className = 'lv-tw'; w.appendChild(tb); el.appendChild(w);
+  });
   dash.draw('tg-title', (el) => { const c = window.tgCalc(); el.textContent = c && !c.bfs ? 'Today and month to date: target vs achievement' : 'Today and BFS till now: target vs achievement'; });
   dash.draw('tg-tiles', (el) => {
     const c = window.tgCalc(); el.replaceChildren(); const t = c ? c.rows.find((r) => r.kind === 'total') : null;
