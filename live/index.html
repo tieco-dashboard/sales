@@ -153,6 +153,10 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
   </section>
 
   <section class="lv-page" id="mkt" data-page="mkt" hidden>
+    <div class="lv-card" id="runrate"><h2 data-draw="rr-title" data-source="chan_target chan_daily sales summary ly_hour ly_meta">BFS run rate: where we stand</h2>
+      <div class="lv-tiles" data-draw="rr-tiles" data-source="chan_target chan_daily sales summary ly_hour ly_meta spend_daily ads"></div>
+      <div class="lv-tw"><table><thead><tr><th class="l">Channel</th><th>Target</th><th>Achieved</th><th>vs plan till now</th><th>Current run rate / day</th><th>Plan run rate / day (days left)</th><th>Required run rate / day</th><th>Lift needed</th><th>Projected at current pace</th><th>Projected vs target</th></tr></thead><tbody data-draw="rr-body" data-source="chan_target chan_daily sales summary ly_hour ly_meta"></tbody></table></div>
+      <p class="lv-note" data-draw="rr-note" data-source="chan_target chan_daily sales summary ly_hour ly_meta">—</p></div>
     <div class="lv-card" id="glance"><h2>Marketing at a glance</h2>
       <p class="lv-note">Today against the BFS 2026 plan, and the whole sale so far. Green = on plan, amber = below plan but above the minimum, red = below the minimum. Meta targets are shown in Ads Manager terms, converted with today's live ratio of Meta revenue in Ads Manager to Shopify net sales. MER = website (Shopify) net sales ÷ all ad spend (Meta + Google); the plan needs 7.9× over the whole sale (₹6 Cr ÷ ₹75.7 L).</p>
       <div class="lv-tiles">
@@ -244,6 +248,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
 </div>
 <script src="spend.js?v=6b40a76b"></script>
 <script src="tg.js?v=51987673"></script>
+<script src="rr.js?v=e6b23225"></script>
 <script>
 window.lvF = {L2: d3.format(',.2f'), N: d3.format(',.0f'), P: d3.format('.0%'), P1: d3.format('.1%'), X: d3.format('.1f')};
 window.lvTime = (s) => { const d = new Date(s); return isNaN(d) ? '—' : d.toLocaleString('en-IN', {timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit'}); };
