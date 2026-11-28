@@ -165,8 +165,8 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
       <p class="lv-note">Each bar takes away one cost. Fixed costs (store rent and staff, salaries, head office) are not deducted.</p>
       <div class="lv-chart" data-draw="gp-wf" data-source="gp gp_daily summary" style="min-height:260px"></div></div>
     <div class="lv-card" id="gptable"><h2 data-draw="gp-ch-h" data-source="gp gp_daily summary">GP by channel and store, today</h2>
-      <p class="lv-note">₹ lakh. CM % = money in pocket ÷ net after actual returns. All ad spend is charged to the website.</p>
-      <div class="lv-tw"><table><thead><tr><th class="l">Channel / store</th><th>Net sales</th><th>Returns (actual)</th><th>Product cost</th><th>Channel fees &amp; PG</th><th>Shipping &amp; packing</th><th>Marketing</th><th>Money in pocket</th><th>CM %</th></tr></thead><tbody data-draw="gp-ch" data-source="gp gp_daily summary"></tbody></table></div></div>
+      <p class="lv-note">₹ lakh. Net sales are after actual returns. CM % = money in pocket ÷ net sales. All ad spend is charged to the website.</p>
+      <div class="lv-tw"><table><thead><tr><th class="l">Channel / store</th><th>Net sales</th><th>Product cost</th><th>Channel fees &amp; PG</th><th>Shipping &amp; packing</th><th>Marketing</th><th>Money in pocket</th><th>CM %</th></tr></thead><tbody data-draw="gp-ch" data-source="gp gp_daily summary"></tbody></table></div></div>
     <div class="lv-card" id="assumptions"><h2>Cost rules used</h2>
       <p class="lv-note">Tell Claude to change any rate and the next run uses it.</p>
       <div class="lv-tw"><table data-source="gp_params" data-row-key="item"><thead><tr><th class="l" data-field="item">Cost</th><th class="l" data-field="rule">How it is applied</th><th class="l" data-field="value">Rate</th></tr></thead><tbody data-draw="b-params"></tbody></table></div></div>
@@ -291,7 +291,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
 <script src="spend.js?v=6b40a76b"></script>
 <script src="ly.js?v=16fe2a71"></script>
 <script src="tg.js?v=51987673"></script>
-<script src="gp.js?v=4c88ab8f"></script>
+<script src="gp.js?v=920a0628"></script>
 <script>
 // Sales & inventory tab: size the embedded page to its content so the whole page scrolls as one.
 (function () {

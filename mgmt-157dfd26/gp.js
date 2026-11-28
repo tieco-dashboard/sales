@@ -32,11 +32,10 @@
     const c = window.gpCalc(); el.replaceChildren();
     const mk = (tag, cl, txt) => { const e = document.createElement(tag); if (cl) e.className = cl; if (txt != null) e.textContent = txt; return e; };
     const tiles = [
-      ['Net sales (₹ lakh)', (t) => N2(t.net_lakh), 'Before returns'],
-      ['After actual returns (₹ lakh)', (t) => N2(t.after), 'Returns as they happen (BFS: no exchange, no return)'],
-      ['Product GP', (t) => PC(t.pgp), 'Net after returns − product cost'],
-      ['Money in pocket (₹ lakh)', (t) => N2(t.contribution_lakh) + ' · ' + PC(t.cm_pct), 'CM % = ÷ net after returns, before fixed costs'],
-      ['Marketing as % of net', (t) => PC(t.mkt_pct), 'Meta + Google ÷ net after returns']];
+      ['Net sales after returns (₹ lakh)', (t) => N2(t.after), 'Excl. GST, actual returns taken off'],
+      ['Product GP', (t) => PC(t.pgp), 'Net sales − product cost'],
+      ['Money in pocket (₹ lakh)', (t) => N2(t.contribution_lakh) + ' · ' + PC(t.cm_pct), 'CM % = ÷ net sales, before fixed costs'],
+      ['Marketing as % of net', (t) => PC(t.mkt_pct), 'Meta + Google ÷ net sales']];
     tiles.forEach(([k, f, s]) => {
       const t = mk('div', 'lv-tile'); t.append(mk('span', 'k', k));
       const pair = mk('div', 'ly-pair'); const a = mk('div'), b = mk('div');
@@ -48,29 +47,29 @@
   dash.draw('gp-days', (tb) => {
     const c = window.gpCalc(); tb.replaceChildren(); if (!c) return;
     const th = tb.parentElement && tb.parentElement.tHead;
-    if (th) { th.replaceChildren(); const r = th.insertRow(); [c.bfs ? 'Sale day' : 'Day', 'Date', 'Net sales', 'After returns', 'Product cost', 'Product GP', 'Fees, PG, shipping', 'Marketing', 'Money in pocket', 'CM %', 'Running total'].forEach((x, i) => { const e = document.createElement('th'); e.textContent = x; if (i < 2) e.className = 'l'; r.appendChild(e); }); }
+    if (th) { th.replaceChildren(); const r = th.insertRow(); [c.bfs ? 'Sale day' : 'Day', 'Date', 'Net sales', 'Product cost', 'Product GP', 'Fees, PG, shipping', 'Marketing', 'Money in pocket', 'CM %', 'Running total'].forEach((x, i) => { const e = document.createElement('th'); e.textContent = x; if (i < 2) e.className = 'l'; r.appendChild(e); }); }
     let run = 0; const s0 = Date.parse(c.start + 'T00:00:00');
     const line = (lab, date, t, opt) => { const tr = tb.insertRow(); if (opt.cls) tr.className = opt.cls;
-      [[lab, 'l'], [date, 'l'], [N2(t.net_lakh)], [N2(t.after)], [N2(t.cogs_lakh)], [PC(t.pgp)], [N2(t.costs)], [N2(t.marketing_lakh)], [N2(t.contribution_lakh), t.contribution_lakh < 0 ? 'bad' : ''], [PC(t.cm_pct), cls(t.cm_pct, 0.1, 0.2)], [opt.run == null ? '' : N2(opt.run)]].forEach(([x, k]) => { const td = tr.insertCell(); td.textContent = x; if (k) td.classList.add(k); }); };
+      [[lab, 'l'], [date, 'l'], [N2(t.after)], [N2(t.cogs_lakh)], [PC(t.pgp)], [N2(t.costs)], [N2(t.marketing_lakh)], [N2(t.contribution_lakh), t.contribution_lakh < 0 ? 'bad' : ''], [PC(t.cm_pct), cls(t.cm_pct, 0.1, 0.2)], [opt.run == null ? '' : N2(opt.run)]].forEach(([x, k]) => { const td = tr.insertCell(); td.textContent = x; if (k) td.classList.add(k); }); };
     c.days.forEach((d) => { run += d.contribution_lakh; const n = Math.round((Date.parse(d.date + 'T00:00:00') - s0) / 864e5) + 1;
       line((c.bfs ? 'Day ' : '') + n + (d.est ? '*' : ''), fmtD(d.date) + (d.now ? ' (till ' + c.tm.split(', ').pop() + ')' : ''), d, {run, cls: d.now ? 'now' : ''}); });
     line(c.perLabel, fmtD(c.start) + ' → ' + c.tm, c.tP, {cls: 'tot'});
   });
-  dash.draw('gp-days-note', (el) => { const c = window.gpCalc(); el.textContent = !c ? '—' : '₹ lakh. Finished days are final; today is up to ' + c.tm + '. Money in pocket = net after returns − product cost − channel fees and PG − shipping and packing − marketing (all ad spend charged to the website); fixed costs not deducted.' + (c.days.some((d) => d.est) ? ' * Day 1 is estimated from the 10:18 pm reading, scaled to the final day sales and final ad spend; the next run replaces it with the exact figure.' : ''); });
+  dash.draw('gp-days-note', (el) => { const c = window.gpCalc(); el.textContent = !c ? '—' : '₹ lakh. Finished days are final; today is up to ' + c.tm + '. Net sales are after actual returns. Money in pocket = net sales − product cost − channel fees and PG − shipping and packing − marketing (all ad spend charged to the website); fixed costs not deducted.' + (c.days.some((d) => d.est) ? ' * Day 1 is estimated from the 10:18 pm reading, scaled to the final day sales and final ad spend; the next run replaces it with the exact figure.' : ''); });
   const perOf = () => ((dash.params() || {}).gp_per === 'bfs' ? 'bfs' : 'today');
   dash.draw('gp-ch-h', (el) => { const c = window.gpCalc(); el.textContent = 'GP by channel and store, ' + (perOf() === 'bfs' && c ? c.perLabel.replace(' (27 Nov →)', '') : 'today'); });
   dash.draw('gp-wf-h', (el) => { const c = window.gpCalc(); el.textContent = 'From net sales to money in pocket, ' + (perOf() === 'bfs' && c ? c.perLabel.replace(' (27 Nov →)', '') : 'today') + ' (₹ lakh)'; });
   dash.draw('gp-ch', (tb) => {
     const c = window.gpCalc(); tb.replaceChildren(); if (!c) return;
-    const rows = (perOf() === 'bfs' ? c.chPer : c.chToday).slice().sort((a, b) => b.net_lakh - a.net_lakh);
+    const rows = (perOf() === 'bfs' ? c.chPer : c.chToday).slice().sort((a, b) => b.after - a.after);
     const tot = perOf() === 'bfs' ? c.tP : c.tT;
     rows.concat([Object.assign({channel: 'Total', tot: 1}, tot)]).forEach((r) => { const tr = tb.insertRow(); if (r.tot) tr.className = 'tot';
-      [[r.channel, 'l'], [N2(r.net_lakh)], [N2(r.returns_lakh)], [N2(r.cogs_lakh)], [N2(r.fees_lakh)], [N2(r.logistics_lakh)], [N2(r.marketing_lakh)], [N2(r.contribution_lakh), r.contribution_lakh < 0 ? 'bad' : ''], [PC(r.cm_pct), cls(r.cm_pct, 0.1, 0.2)]].forEach(([x, k]) => { const td = tr.insertCell(); td.textContent = x; if (k) td.classList.add(k); }); });
+      [[r.channel, 'l'], [N2(r.after)], [N2(r.cogs_lakh)], [N2(r.fees_lakh)], [N2(r.logistics_lakh)], [N2(r.marketing_lakh)], [N2(r.contribution_lakh), r.contribution_lakh < 0 ? 'bad' : ''], [PC(r.cm_pct), cls(r.cm_pct, 0.1, 0.2)]].forEach(([x, k]) => { const td = tr.insertCell(); td.textContent = x; if (k) td.classList.add(k); }); });
   });
   dash.draw('gp-wf', (el) => {
     const c = window.gpCalc(); el.replaceChildren(); if (!c) { el.textContent = '—'; return; }
     const t = perOf() === 'bfs' ? c.tP : c.tT;
-    const steps = [['Net sales', t.net_lakh, 'total'], ['Returns (actual)', -t.returns_lakh], ['Product cost', -t.cogs_lakh], ['Channel fees & PG', -t.fees_lakh], ['Shipping & packing', -t.logistics_lakh], ['Marketing', -t.marketing_lakh], ['Money in pocket', t.contribution_lakh, 'total']];
+    const steps = [['Net sales', t.after, 'total'], ['Product cost', -t.cogs_lakh], ['Channel fees & PG', -t.fees_lakh], ['Shipping & packing', -t.logistics_lakh], ['Marketing', -t.marketing_lakh], ['Money in pocket', t.contribution_lakh, 'total']];
     let run = 0; const bars = steps.map(([step, v, kind]) => { let y0, y1; if (kind === 'total') { y0 = 0; y1 = v; run = v; } else { y0 = run + v; y1 = run; run += v; } return {step, v, y0: Math.min(y0, y1), y1: Math.max(y0, y1), kind: kind || 'minus'}; });
     const W = el.clientWidth || 600, H = 260, m = {t: 18, r: 8, b: 56, l: 40};
     const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Waterfall from net sales to money in pocket, ₹ lakh');
