@@ -109,6 +109,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
 .tg-bn-v{font-family:var(--font-anthropic-serif);font-size:2.4rem;line-height:1.1;font-variant-numeric:tabular-nums}
 .tg-bn-s{font-size:var(--cds-font-size-body)}
 .tg-bn-t tr.now td{font-weight:600}
+.tg-bn-t tr.fut td{color:var(--color-fg-muted)}
 .lv-pill{display:inline-block;padding:0 .45rem;border-radius:999px;border:1px solid currentColor;line-height:1.5}
 </style>
 <div class="lv">
@@ -199,6 +200,10 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
       <div class="lv-tiles" data-draw="rr-tiles" data-source="chan_target chan_daily sales summary ly_hour ly_meta spend_daily ads"></div>
       <div class="lv-tw"><table><thead><tr><th class="l">Channel</th><th>Target</th><th>Achieved</th><th>vs plan till now</th><th>Current run rate / day</th><th>Plan run rate / day (days left)</th><th>Required run rate / day</th><th>Lift needed</th><th>Projected at current pace</th><th>Projected vs target</th></tr></thead><tbody data-draw="rr-body" data-source="chan_target chan_daily sales summary ly_hour ly_meta"></tbody></table></div>
       <p class="lv-note" data-draw="rr-note" data-source="chan_target chan_daily sales summary ly_hour ly_meta">—</p></div>
+    <div class="lv-card" id="spend27"><h2>Ad spend vs plan from 27 Nov: day by day and in total</h2>
+      <div class="lv-tiles" data-draw="sp27-tiles" data-source="spend_daily ads chan_target chan_daily sales summary ly_hour ly_meta"></div>
+      <div class="lv-tw"><table class="tg-bn-t"><thead><tr><th class="l">Sale day</th><th class="l">Date</th><th class="l">Phase</th><th>Meta plan</th><th>Meta actual</th><th>Google plan</th><th>Google actual</th><th>Total plan</th><th>Total actual</th><th>% of plan</th><th>Website target</th><th>Website sales</th><th>Plan MER</th><th>MER</th><th>Plan, running</th><th>Actual, running</th></tr></thead><tbody data-draw="sp27-body" data-source="spend_daily ads chan_target chan_daily sales summary ly_hour ly_meta"></tbody></table></div>
+      <p class="lv-note" data-draw="sp27-note" data-source="spend_daily ads chan_target chan_daily sales summary ly_hour ly_meta">—</p></div>
     <div class="lv-card" id="glance"><h2>Marketing at a glance</h2>
       <p class="lv-note">Today against the BFS 2026 plan, and the whole sale so far. Green = on plan, amber = below plan but above the minimum, red = below the minimum. Meta targets are shown in Ads Manager terms, converted with today's live ratio of Meta revenue in Ads Manager to Shopify net sales. MER = website (Shopify) net sales ÷ all ad spend (Meta + Google); the plan needs 7.9× over the whole sale (₹6 Cr ÷ ₹75.7 L); break-even MER at the plan's margins is 2.8×.</p>
       <div class="lv-tiles">
@@ -295,7 +300,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
 <script src="spend.js?v=6b40a76b"></script>
 <script src="ly.js?v=16fe2a71"></script>
 <script src="tg.js?v=51987673"></script>
-<script src="rr.js?v=e6b23225"></script>
+<script src="rr.js?v=80871c24"></script>
 <script src="gp.js?v=920a0628"></script>
 <script>
 // Sales & inventory tab: size the embedded page to its content so the whole page scrolls as one.
