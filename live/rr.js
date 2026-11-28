@@ -43,12 +43,53 @@
     const web = p.rows.find((r) => /Website/.test(r.name)) || {}, tot = p.rows.find((r) => r.total) || {};
     tile('Website: required vs plan run rate', '₹' + N2(web.req) + ' / ₹' + N2(web.planRem) + ' L a day', web.uplift == null ? '' : web.uplift <= 0 ? 'On track for ₹' + N2(web.target) + ' L' : '+' + PC(web.uplift) + ' above plan every day left to reach ₹' + N2(web.target) + ' L', web.uplift == null ? '' : web.uplift <= 0 ? 'ok' : web.uplift <= 0.15 ? 'warn' : 'bad');
     tile('Total: required vs plan run rate', '₹' + N2(tot.req) + ' / ₹' + N2(tot.planRem) + ' L a day', 'At current pace (' + PC(tot.paceP) + ' of plan) BFS ends at ₹' + N2(tot.proj) + ' L = ' + PC(tot.projPct) + ' of ₹' + N2(tot.target) + ' L', cls(tot.projPct));
-    if (!p.c.bfs || !window.spBfs) return;
-    const spent = window.spBfs('All', 'spend'), budget = window.spBfs('All', 'budget'), mer = window.spBfs('All', 'mer'), merNeed = window.spBfs('All', 'mer_needed');
-    const daily = ok('spend_daily') || [], ads = ok('ads') || [];
-    const saleSpend = daily.filter((r) => r.date >= p.c.start && r.date < p.c.today).reduce((a, r) => a + (+r.meta_actual || 0) + (+r.google_actual || 0), 0) + ads.reduce((a, r) => a + (+r.spend_today || 0), 0);
-    const curSpend = p.elapsed ? saleSpend / p.elapsed : null, left = budget != null && spent != null ? budget - spent : null, reqSpend = left != null && p.rem > 0 ? left / p.rem : null;
-    tile('Ad spend: current vs budget left per day', '₹' + N2(curSpend / 1e5) + ' / ₹' + N2(reqSpend / 1e5) + ' L', 'Meta + Google; ₹' + N2(left / 1e5) + ' L of ₹' + N2(budget / 1e5) + ' L left', curSpend && reqSpend ? (curSpend <= reqSpend * 1.05 ? 'ok' : 'warn') : '');
-    tile('MER now vs MER needed', (mer ? mer.toFixed(1) : '—') + '× / ' + (merNeed ? merNeed.toFixed(1) : '—') + '×', 'Website sales ÷ ad spend; needed = website still to reach ₹6 Cr ÷ budget left', mer && merNeed ? (mer >= merNeed ? 'ok' : mer >= merNeed * 0.8 ? 'warn' : 'bad') : '');
   });
+  // Ad spend vs the phased BFS plan, from the sale start (27 Nov) to the end of the plan (7 Dec morning), day by day and in total.
+  const SP0 = '2026-11-27';
+  const spCalc = () => {
+    const p = pace(); const daily = ok('spend_daily'), ads = ok('ads') || [];
+    if (!p || !daily) return null;
+    const today = p.c.today, frac = p.todayFrac;
+    const meta = ads.find((r) => r.platform === 'Meta') || {}, g = ads.find((r) => r.platform === 'Google') || {};
+    const rows = daily.filter((r) => r.date >= SP0).sort((x, y) => (x.date < y.date ? -1 : 1)).map((r) => {
+      const isT = r.date === today, fut = r.date > today;
+      const ma = fut ? null : isT ? Math.max(+meta.spend_today || 0, +r.meta_actual || 0) : (r.meta_actual == null ? null : +r.meta_actual);
+      const ga = fut ? null : isT ? Math.max(+g.spend_today || 0, +r.google_actual || 0) : (r.google_actual == null ? null : +r.google_actual);
+      const mp = +r.meta_plan || 0, gp = +r.google_plan || 0, tp = mp + gp, ta = ma == null && ga == null ? null : (ma || 0) + (ga || 0);
+      const planNow = fut ? 0 : isT ? tp * frac : tp;
+      const web = fut ? null : (r.web_actual == null ? null : +r.web_actual);
+      return {date: r.date, day: r.day, phase: r.phase, mp, ma, gp, ga, tp, ta, planNow, isT, fut, web, webT: +r.revenue_target || null, merPlan: +r.total_roas_target || null, mer: web != null && ta ? web * 1e5 / ta : null};
+    });
+    const sum = (k, f) => rows.filter(f || (() => true)).reduce((a, r) => a + (+r[k] || 0), 0);
+    const budget = sum('tp'), spent = sum('ta'), planNow = sum('planNow'), metaBudget = sum('mp'), gBudget = sum('gp');
+    const daysLeftPlan = rows.filter((r) => r.date > today);
+    const left = budget - spent, planLeft = sum('tp', (r) => r.date > today) + (rows.find((r) => r.isT) ? Math.max(0, rows.find((r) => r.isT).tp - (rows.find((r) => r.isT).ta || 0)) : 0);
+    const webSale = sum('web', (r) => !r.fut), webPlanNow = rows.filter((r) => !r.fut).reduce((a, r) => a + (r.webT || 0) * (r.isT ? frac : 1), 0);
+    const tr = rows.find((r) => r.isT) || {};
+    return {rows, budget, spent, planNow, metaBudget, gBudget, left, planLeft, rem: p.rem, nLeft: daysLeftPlan.length, webSale, webPlanNow, mer: spent ? webSale * 1e5 / spent : null, merPlanNow: planNow ? webPlanNow * 1e5 / planNow : null, merNeed: left > 0 ? Math.max(0, 600 - webSale) * 1e5 / left : null, today: tr, frac};
+  };
+  window.rrSpend = spCalc;
+  const L = (v) => v == null || !isFinite(v) ? '—' : N2(v / 1e5);
+  dash.draw('sp27-tiles', (el) => {
+    const s = spCalc(); el.replaceChildren(); if (!s) return;
+    const tile = (k, v, sub, c2) => { const d = document.createElement('div'); d.className = 'lv-tile'; const a = document.createElement('span'); a.className = 'k'; a.textContent = k; const b = document.createElement('span'); b.className = 'v' + (c2 ? ' ' + c2 : ''); b.textContent = v; const e = document.createElement('span'); e.className = 's'; e.textContent = sub; d.append(a, b, e); el.appendChild(d); };
+    const over = (a, b) => a == null || !b ? '' : a <= b * 1.05 ? 'ok' : a <= b * 1.2 ? 'warn' : 'bad';
+    tile('Ad spend today vs day plan', '₹' + L(s.today.ta) + ' / ₹' + L(s.today.tp) + ' L', 'Meta ₹' + L(s.today.ma) + ' L of ₹' + L(s.today.mp) + ' L · Google ₹' + L(s.today.ga) + ' L of ₹' + L(s.today.gp) + ' L · expected by now ₹' + L(s.today.planNow) + ' L', over(s.today.ta, s.today.planNow));
+    tile('Ad spend from 27 Nov vs plan to date', '₹' + L(s.spent) + ' / ₹' + L(s.planNow) + ' L', (s.planNow ? PC(s.spent / s.planNow) + ' of plan to date · ' : '') + PC(s.spent / s.budget) + ' of the ₹' + L(s.budget) + ' L sale budget used', over(s.spent, s.planNow));
+    tile('Budget left: per day vs plan per day', '₹' + L(s.rem > 0 ? s.left / s.rem : null) + ' / ₹' + L(s.rem > 0 ? s.planLeft / s.rem : null) + ' L', '₹' + L(s.left) + ' L left of ₹' + L(s.budget) + ' L (Meta ₹' + L(s.metaBudget) + ' L + Google ₹' + L(s.gBudget) + ' L, 27 Nov – 7 Dec plan)', s.left < s.planLeft * 0.95 ? 'warn' : 'ok');
+    tile('MER from 27 Nov: actual vs plan vs needed', (s.mer ? s.mer.toFixed(1) : '—') + '× / ' + (s.merPlanNow ? s.merPlanNow.toFixed(1) : '—') + '× / ' + (s.merNeed ? s.merNeed.toFixed(1) : '—') + '×', 'Website ₹' + N2(s.webSale) + ' L on ₹' + L(s.spent) + ' L spend; needed = website still to reach ₹6 Cr ÷ budget left', s.mer && s.merNeed ? (s.mer >= s.merNeed ? 'ok' : s.mer >= s.merNeed * 0.8 ? 'warn' : 'bad') : '');
+  });
+  dash.draw('sp27-body', (tb) => {
+    const s = spCalc(); tb.replaceChildren(); if (!s) return;
+    const fmtD = (d) => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', {day: 'numeric', month: 'short'});
+    const line = (cells, cl) => { const tr = tb.insertRow(); if (cl) tr.className = cl; cells.forEach(([t, k]) => { const td = tr.insertCell(); td.textContent = t; if (k) td.classList.add(...String(k).split(' ').filter(Boolean)); }); };
+    let runP = 0, runA = 0;
+    s.rows.forEach((r) => {
+      runP += r.tp; if (r.ta != null) runA += r.ta; const pct = r.ta != null && r.tp ? r.ta / (r.isT ? r.planNow || r.tp : r.tp) : null;
+      line([[r.day, 'l'], [fmtD(r.date) + (r.isT ? ' (so far)' : ''), 'l'], [r.phase || '', 'l'], [L(r.mp)], [r.fut ? '' : L(r.ma)], [L(r.gp)], [r.fut ? '' : L(r.ga)], [L(r.tp)], [r.fut ? '' : L(r.ta)], [r.fut ? '' : PC(pct), r.fut || pct == null ? '' : pct <= 1.05 ? 'ok' : pct <= 1.2 ? 'warn' : 'bad'], [r.webT == null ? '—' : N2(r.webT)], [r.web == null ? '' : N2(r.web)], [r.merPlan ? r.merPlan.toFixed(1) + '×' : '—'], [r.mer ? r.mer.toFixed(1) + '×' : '', r.mer && r.merPlan ? (r.mer >= r.merPlan ? 'ok' : r.mer >= r.merPlan * 0.7 ? 'warn' : 'bad') : ''], [L(runP)], [r.fut ? '' : L(runA)]], r.isT ? 'now' : r.fut ? 'fut' : '');
+    });
+    line([['Sale to date', 'l'], ['27 Nov → now', 'l'], ['', 'l'], [''], [''], [''], [''], [L(s.planNow)], [L(s.spent)], [PC(s.planNow ? s.spent / s.planNow : null)], [N2(s.webPlanNow)], [N2(s.webSale)], [s.merPlanNow ? s.merPlanNow.toFixed(1) + '×' : '—'], [s.mer ? s.mer.toFixed(1) + '×' : '—'], [''], ['']], 'tot');
+    line([['Full sale plan', 'l'], ['27 Nov – 7 Dec', 'l'], ['', 'l'], [L(s.metaBudget)], [''], [L(s.gBudget)], [''], [L(s.budget)], [''], [''], [N2(s.rows.reduce((a, r) => a + (r.webT || 0), 0))], [''], [''], [''], [''], ['']], 'tot');
+  });
+  dash.draw('sp27-note', (el) => { const s = spCalc(); el.textContent = !s ? '—' : '₹ lakh. Plan = the BFS media plan by day (Meta + Google) from the sale start on 27 Nov to the close on 7 Dec morning; pre-sale spend (18–26 Nov) is not counted here. Today\'s "expected by now" = today\'s plan × ' + Math.round(s.frac * 100) + '% (share of last year\'s same sale day done by this hour). Website sales and target are Shopify net excl. GST; MER = website sales ÷ Meta + Google spend; plan MER = the plan\'s day target on all ad spend. The sales targets in the run-rate table above are Zuber\'s ₹7 Cr plan; the website target here is the agency\'s ₹6 Cr media plan.'; });
 })();
