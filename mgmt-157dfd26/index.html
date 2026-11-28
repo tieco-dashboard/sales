@@ -155,20 +155,18 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
     </div>
   </section>
 
-  <section class="lv-page" id="gp" data-page="gp" hidden>
-    <div class="lv-tiles">
-      <div class="lv-tile"><span class="k">Net sales today (₹ lakh)</span><span class="v" data-draw="g-net" data-source="gp_tot" data-field="net_lakh" data-row="0">—</span><span class="s">Before returns</span></div>
-      <div class="lv-tile"><span class="k">After actual returns (₹ lakh)</span><span class="v" data-draw="g-nar" data-source="gp_tot" data-field="net_after" data-row="0">—</span><span class="s">Returns as they happen (BFS: no exchange, no return)</span></div>
-      <div class="lv-tile"><span class="k">Product GP</span><span class="v" data-draw="g-pgp" data-source="gp_tot" data-field="product_gp" data-row="0">—</span><span class="s">Net after returns − product cost</span></div>
-      <div class="lv-tile"><span class="k">Money in pocket (₹ lakh)</span><span class="v" data-draw="g-cm" data-source="gp_tot" data-field="contribution_lakh" data-row="0">—</span><span class="s"><span data-draw="g-cmp" data-source="gp_tot" data-field="cm_pct" data-row="0">—</span> of net after returns, before fixed costs</span></div>
-      <div class="lv-tile"><span class="k">Marketing as % of net</span><span class="v" data-draw="g-mk" data-source="gp_tot" data-field="mkt_pct" data-row="0">—</span><span class="s">Meta + Google ÷ net after returns</span></div>
-    </div>
-    <div class="lv-card" id="waterfall"><h2>From net sales to money in pocket, today (₹ lakh)</h2>
+    <section class="lv-page" id="gp" data-page="gp" hidden>
+    <div class="lv-tiles" data-draw="gp-tiles" data-source="gp gp_daily summary"></div>
+    <div class="lv-card" id="gpdays"><h2>GP day by day: each sale day and the running total</h2>
+      <p class="lv-note" data-draw="gp-days-note" data-source="gp gp_daily summary">—</p>
+      <div class="lv-tw"><table class="tg-bn-t"><thead><tr><th class="l">Sale day</th></tr></thead><tbody data-draw="gp-days" data-source="gp gp_daily summary"></tbody></table></div></div>
+    <div class="lv-tools"><select class="lv-in" data-p="gp_per" aria-label="Period for the waterfall and channel table"><option value="">Waterfall and channel table: today</option><option value="bfs">Waterfall and channel table: BFS till now</option></select></div>
+    <div class="lv-card" id="waterfall"><h2 data-draw="gp-wf-h" data-source="gp gp_daily summary">From net sales to money in pocket, today (₹ lakh)</h2>
       <p class="lv-note">Each bar takes away one cost. Fixed costs (store rent and staff, salaries, head office) are not deducted.</p>
-      <div class="lv-chart" data-draw="c-wf" data-source="gp_waterfall" style="min-height:260px"></div></div>
-    <div class="lv-card" id="gptable"><h2>GP by channel and store, today</h2>
+      <div class="lv-chart" data-draw="gp-wf" data-source="gp gp_daily summary" style="min-height:260px"></div></div>
+    <div class="lv-card" id="gptable"><h2 data-draw="gp-ch-h" data-source="gp gp_daily summary">GP by channel and store, today</h2>
       <p class="lv-note">₹ lakh. CM % = money in pocket ÷ net after actual returns. All ad spend is charged to the website.</p>
-      <div class="lv-tw"><table data-source="gp" data-row-key="channel"><thead><tr><th class="l" data-field="channel">Channel / store</th><th data-field="net_lakh">Net sales</th><th data-field="returns_lakh">Returns (actual)</th><th data-field="cogs_lakh">Product cost</th><th data-field="fees_lakh">Channel fees &amp; PG</th><th data-field="logistics_lakh">Shipping &amp; packing</th><th data-field="marketing_lakh">Marketing</th><th data-field="contribution_lakh">Money in pocket</th><th data-field="cm_pct">CM %</th></tr></thead><tbody data-draw="b-gp"></tbody></table></div></div>
+      <div class="lv-tw"><table><thead><tr><th class="l">Channel / store</th><th>Net sales</th><th>Returns (actual)</th><th>Product cost</th><th>Channel fees &amp; PG</th><th>Shipping &amp; packing</th><th>Marketing</th><th>Money in pocket</th><th>CM %</th></tr></thead><tbody data-draw="gp-ch" data-source="gp gp_daily summary"></tbody></table></div></div>
     <div class="lv-card" id="assumptions"><h2>Cost rules used</h2>
       <p class="lv-note">Tell Claude to change any rate and the next run uses it.</p>
       <div class="lv-tw"><table data-source="gp_params" data-row-key="item"><thead><tr><th class="l" data-field="item">Cost</th><th class="l" data-field="rule">How it is applied</th><th class="l" data-field="value">Rate</th></tr></thead><tbody data-draw="b-params"></tbody></table></div></div>
@@ -293,6 +291,7 @@ html,body{margin:0;background:var(--color-bg);color:var(--color-fg)}
 <script src="spend.js?v=6b40a76b"></script>
 <script src="ly.js?v=16fe2a71"></script>
 <script src="tg.js?v=51987673"></script>
+<script src="gp.js?v=4c88ab8f"></script>
 <script>
 // Sales & inventory tab: size the embedded page to its content so the whole page scrolls as one.
 (function () {
